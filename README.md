@@ -1,0 +1,65 @@
+# Salat Times for Omarchy
+
+A quiet, theme-aware prayer timetable for the Omarchy Quattro bar. See the next prayer, time remaining, Hijri date, and the full day without leaving your desktop.
+
+![Salat Times panel](preview.png)
+
+## Install
+
+Requires Omarchy Quattro with its Quickshell plugin runtime and `curl`. Qt Quick Controls and the Omarchy `qs.Commons` / `qs.Ui` modules are supplied by the desktop. No additional service, installer, root access, or remote build is required.
+
+```sh
+omarchy plugin add https://github.com/Abdelhakim-Baalla/omarchy-salat-times.git --enable
+```
+
+The widget defaults to the center bar section. To move it beside the clock:
+
+```sh
+omarchy bar move abdelhakim.salat --section centerEnd
+```
+
+## Daily use
+
+- Left-click the bar widget to open the timetable; Escape closes it.
+- Right-click the widget to cycle its label styles.
+- Middle-click, the language button, or `A` switches Arabic and English.
+- `S` opens settings; Tab moves through settings controls and Escape returns to the timetable.
+- `E` edits a location; `M` cycles calculation methods; `B` cycles bar styles.
+- The day dial places prayers clockwise around a 24-hour day starting at midnight. The bright path is elapsed time since the previous prayer; its center shows the next start time.
+
+## Settings
+
+Choose a Moroccan Habous city, use your Omarchy weather location, or search for a city. Calculation methods include Morocco, MWL, Egypt, ISNA, Makkah, Karachi, Tehran, Jafari, Algeria, and Tunisia, with Standard or Hanafi Asr calculation and a minute correction. Reminders support notifications, a dismissible overlay, or silent mode, with optional advance reminders.
+
+The source shown beside the daily schedule identifies the data actually in use: Habous, AlAdhan, or offline calculation. Sunrise is included as a day marker, not a prayer. Calculated results can differ from a local mosque’s timetable. Tomorrow’s missing online data is calculated locally.
+
+## Network and privacy
+
+Online tables are enabled initially. Turn off **Online prayer tables** in Settings to use local astronomical calculations and stop scheduled table requests. When enabled, requests happen at startup, hourly, at midnight, and after relevant setting changes. Habous is tried first when selected; AlAdhan is the fallback. HTTPS certificate verification, request timeouts, and response-size limits are enabled.
+
+- `www.habous.gov.ma`: selected Moroccan city identifier for official tables.
+- `api.aladhan.com`: coordinates, method, madhab, and date for calculated online times.
+- `geocoding-api.open-meteo.com`: a city query when using location search. Search remains an explicit online action even when online tables are disabled.
+
+No analytics, account, or API key. The plugin reads the local Omarchy weather location when configured to follow it. Settings are stored in `~/.local/state/omarchy/salat.json`; existing settings are preserved. The plugin runs with the same permissions as the Omarchy shell.
+
+## Remove
+
+```sh
+omarchy plugin remove abdelhakim.salat
+```
+
+Removal leaves the local settings file so a later installation can reuse it. Delete that file manually if you also want to forget the settings.
+
+## Development
+
+```sh
+omarchy plugin validate .
+node tests/model.test.cjs
+```
+
+QML uses virtual `qs` imports provided by Quickshell. Check runtime loading in the actual shell; standalone `qmllint` needs those imports configured and otherwise reports unresolved types. Desktop animation preferences are honored through Omarchy’s native controls and `Style.duration`.
+
+## License
+
+MIT; see [LICENSE](LICENSE). The offline engine uses astronomical prayer-time formulas in the PrayTimes tradition. No third-party photographs, illustrations, or font files are bundled; the preview is a capture of this plugin.

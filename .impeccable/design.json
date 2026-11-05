@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-05T15:15:02.989013+00:00",
+  "title": "Design System: Salat Times",
+  "extensions": {
+    "platform": "Qt Quick / Quickshell / Omarchy",
+    "tokenSyntax": "Frontmatter values are normative QML expressions, not CSS. Evaluate in their source binding context.",
+    "colorMeta": {
+      "foreground": {
+        "role": "neutral",
+        "displayName": "Theme foreground",
+        "source": "Panel.qml: contentForeground"
+      },
+      "accent": {
+        "role": "primary",
+        "displayName": "Theme accent",
+        "source": "qs.Commons Color.accent"
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted theme foreground"
+      },
+      "next-surface": {
+        "role": "primary",
+        "displayName": "Next prayer accent wash"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "purpose": "Remaining time, horizontal fit down to Style.space(28)."
+      },
+      "body": {
+        "purpose": "Language-aware labels and timetable times."
+      }
+    },
+    "motion": [
+      {
+        "name": "settings-opacity",
+        "value": "NumberAnimation { duration: Style.duration(160); easing.type: Easing.OutCubic }",
+        "purpose": "Settings opacity binding; visible and height change immediately."
+      },
+      {
+        "name": "dial-updates",
+        "value": "Canvas.requestPaint() on data, color, width and height changes",
+        "purpose": "No continuous repaint or ornamental motion."
+      }
+    ],
+    "native": {
+      "surfaceOwner": "qs.Ui.KeyboardPanel",
+      "controlStateOwner": "qs.Ui",
+      "tonalRamps": "Not generated: palette is selected dynamically by Omarchy.",
+      "breakpoints": "No web breakpoints; use fittedContentWidth/fittedContentHeight and vertical overflow.",
+      "previewPolicy": "Native QML source references replace HTML/CSS snippets. Do not synthesize web components.",
+      "evidence": [
+        ".impeccable/review/en.png",
+        ".impeccable/review/ar.png",
+        ".impeccable/review/settings.png",
+        ".impeccable/review/settings-lower.png"
+      ]
+    }
+  },
+  "components": [
+    {
+      "name": "Prayer row",
+      "kind": "custom",
+      "refersTo": "prayer-row",
+      "description": "Rectangle delegate: height Style.space(40), radius Style.cornerRadius; right-aligned Style.space(56) time column.",
+      "native": {
+        "language": "qml",
+        "source": "Panel.qml"
+      }
+    },
+    {
+      "name": "Next prayer row",
+      "kind": "custom",
+      "refersTo": "prayer-row-next",
+      "description": "isNext adds accent text, bold weight, localized Next label and accent alpha 0.12 fill.",
+      "native": {
+        "language": "qml",
+        "source": "Panel.qml"
+      }
+    },
+    {
+      "name": "Day dial",
+      "kind": "custom",
+      "refersTo": "day-dial",
+      "description": "Canvas with event-driven painting and real 24-hour fractions; see DESIGN.md for geometry.",
+      "native": {
+        "language": "qml",
+        "source": "DayDial.qml"
+      }
+    },
+    {
+      "name": "Stepper",
+      "kind": "custom",
+      "refersTo": "stepper-value",
+      "description": "Row of native PanelActionButton minus/plus and centered PlainLabel value.",
+      "native": {
+        "language": "qml",
+        "source": "StepperRow.qml"
+      }
+    },
+    {
+      "name": "Theme controls",
+      "kind": "custom",
+      "description": "Reuse qs.Ui Button, Toggle, Dropdown, SearchableDropdown, ButtonGroup and TextField with live foreground/accent/fontFamily.",
+      "native": {
+        "language": "qml",
+        "source": "Panel.qml"
+      }
+    },
+    {
+      "name": "Bar widget",
+      "kind": "custom",
+      "description": "qs.Ui WidgetButton with native active imminent state and three mouse-button actions.",
+      "native": {
+        "language": "qml",
+        "source": "BarWidget.qml"
+      }
+    }
+  ],
+  "narrative": {
+    "northStar": "Today’s prayer timetable",
+    "overview": "A compact native prayer timetable that belongs to the current Omarchy desktop. Clear prayer times lead; the theme supplies the font, foreground, surface, and accent. The 24-hour orbit explains the day without competing with the countdown.",
+    "keyCharacteristics": [
+      "Theme-bound native typography and color",
+      "Aligned times with explicit next-prayer emphasis",
+      "Flat tonal surfaces and restrained motion"
+    ],
+    "rules": [
+      {
+        "name": "The Theme Rule",
+        "body": "Preserve dynamic theme expressions; a screenshot’s colors are evidence of one theme, not a new palette.",
+        "section": "colors"
+      }
+    ],
+    "dos": [
+      "Do preserve live Omarchy theme bindings.",
+      "Do keep Arabic labels readable and numeric times unmirrored.",
+      "Do show the next prayer and its exact time before settings."
+    ],
+    "donts": [
+      "Don’t introduce a fixed palette or bundled display font.",
+      "Don’t add glow, ornamental clock motion, or a reveal that delays prayer data.",
+      "Don’t replace native shared controls with web approximations."
+    ]
+  }
+}

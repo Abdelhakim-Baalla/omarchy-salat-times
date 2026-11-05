@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "abdelhakim.salat",
+  "name": "Salat Times",
+  "version": "1.1.0",
+  "author": "abdelhakim",
+  "description": "Theme-aware prayer times with Arabic and English, Habous tables, offline calculation, a daily schedule, and adhan reminders.",
+  "kinds": [
+    "service",
+    "bar-widget"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "service": "Service.qml",
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Salat Times",
+    "description": "Next prayer countdown with a full daily schedule panel",
+    "category": "Time",
+    "allowMultiple": false,
+    "defaultSection": "center"
+  },
+  "license": "MIT"
+}
