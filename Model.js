@@ -13,12 +13,23 @@ var METHODS = {
   Tehran:  { fajr: 17.7, isha: 14,   maghrib: "angle", maghribAngle: 4.5, ishaInterval: 0, label: "Institute of Geophysics, Tehran", aladhan: 7 },
   Jafari:  { fajr: 16,   isha: 14,   maghrib: "angle", maghribAngle: 4, ishaInterval: 0,  label: "Shia Ithna Ashari", aladhan: 0 },
   // Maghreb phone apps usually track MWL/Egypt noon, then add ~+5 after zawal.
-  Morocco: { fajr: 18,   isha: 17,   maghrib: "angle", maghribAngle: 0, ishaInterval: 0,  label: "Morocco", aladhan: 21 },
+  Morocco: { fajr: 19,   isha: 17,   maghrib: "angle", maghribAngle: 0, ishaInterval: 0,  label: "Morocco", aladhan: 21 },
   Algeria: { fajr: 18,   isha: 17,   maghrib: "angle", maghribAngle: 0, ishaInterval: 0,  label: "Algeria", aladhan: 19 },
-  Tunisia: { fajr: 18,   isha: 18,   maghrib: "angle", maghribAngle: 0, ishaInterval: 0,  label: "Tunisia", aladhan: 18 }
+  Tunisia: { fajr: 18,   isha: 18,   maghrib: "angle", maghribAngle: 0, ishaInterval: 0,  label: "Tunisia", aladhan: 18 },
+  Gulf: { fajr: 19.5, isha: 0, ishaInterval: 90, label: "Gulf Region", aladhan: 8 },
+  Kuwait: { fajr: 18, isha: 17.5, label: "Kuwait", aladhan: 9 },
+  Qatar: { fajr: 18, isha: 0, ishaInterval: 90, label: "Qatar", aladhan: 10 },
+  Singapore: { fajr: 20, isha: 18, label: "Singapore · MUIS", aladhan: 11 },
+  France: { fajr: 12, isha: 12, label: "France · UOIF", aladhan: 12 },
+  Turkey: { fajr: 18, isha: 17, label: "Turkey · Diyanet (experimental)", aladhan: 13 },
+  Russia: { fajr: 16, isha: 15, label: "Russia", aladhan: 14 },
+  Dubai: { fajr: 18.2, isha: 18.2, label: "Dubai (experimental)", aladhan: 16 },
+  Malaysia: { fajr: 20, isha: 18, label: "Malaysia · JAKIM", aladhan: 17 },
+  Indonesia: { fajr: 20, isha: 18, label: "Indonesia · Kemenag", aladhan: 20 }
+
 }
 
-var METHOD_ORDER = ["Morocco", "MWL", "Egypt", "ISNA", "Makkah", "Karachi", "Tehran", "Jafari", "Algeria", "Tunisia"]
+var METHOD_ORDER = ["Morocco", "MWL", "Egypt", "ISNA", "Makkah", "Karachi", "Tehran", "Jafari", "Algeria", "Tunisia", "Gulf", "Kuwait", "Qatar", "Singapore", "France", "Turkey", "Russia", "Dubai", "Malaysia", "Indonesia"]
 
 var NAMES = {
   en: {
@@ -547,20 +558,6 @@ function formatCountdownShort(ms) {
   return "<1m"
 }
 
-function progressBetween(start, end, now) {
-  var a = start.getTime()
-  var b = end.getTime()
-  var n = now.getTime()
-  if (!(b > a)) return 0
-  return Math.max(0, Math.min(1, (n - a) / (b - a)))
-}
-
-// Fraction of the civil day [0,1] for dial drawing.
-function dayFraction(date) {
-  if (!date || isNaN(date.getTime())) return 0
-  return (date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds()) / 86400
-}
-
 function findNext(schedule, now) {
   if (!schedule || !schedule.length) return null
   for (var i = 0; i < schedule.length; i++) {
@@ -707,7 +704,8 @@ function parseGeocodingResults(raw) {
         description: region.slice(0, 240),
         latitude: lat,
         longitude: lng,
-        countryCode: String(r.country_code || "").slice(0, 2),
+        countryCode: String(r.country_code || "").slice(0, 2).toUpperCase(),
+        countryName: String(r.country || "").slice(0, 120),
         timezone: String(r.timezone || "").slice(0, 80)
       })
     }
@@ -725,112 +723,38 @@ function dateKey(date) {
   return date.getFullYear() + "-" + pad2(date.getMonth() + 1) + "-" + pad2(date.getDate())
 }
 
-function dialPoints(schedule, now) {
-  var t = now && now.getTime ? now.getTime() : NaN
-  var points = []
-  for (var i = 0; i < schedule.length; i++) {
-    points.push({
-      id: schedule[i].id,
-      fraction: dayFraction(schedule[i].date),
-      isSunrise: schedule[i].id === "sunrise",
-      passed: isFinite(t) && schedule[i].date.getTime() <= t
-    })
-  }
-  return points
+// Suggestions are starting points; users can retain their mosque's convention.
+function methodForCountry(code) {
+  var methods = { MA: "Morocco", SA: "Makkah", EG: "Egypt", US: "ISNA", CA: "ISNA",
+    PK: "Karachi", BD: "Karachi", IN: "Karachi", AF: "Karachi", IR: "Tehran",
+    DZ: "Algeria", TN: "Tunisia", AE: "Dubai", QA: "Qatar", KW: "Kuwait",
+    BH: "Gulf", OM: "Gulf", SG: "Singapore", MY: "Malaysia", ID: "Indonesia",
+    TR: "Turkey", RU: "Russia", FR: "France" }
+  return methods[String(code || "").toUpperCase()] || "MWL"
 }
 
-// Geometry for the "journey" dial: where we are between the previous
-// marker and the next salah. Fractions are on the 24h circle [0,1].
-function dialJourney(schedule, now) {
-  var empty = {
-    nowFraction: dayFraction(now),
-    fromFraction: 0,
-    nextFraction: 0,
-    nextId: "",
-    prevId: "",
-    remainingRatio: 0,
-    elapsedRatio: 0,
-    hasWindow: false
+function countryOptions(countries, lang) {
+  var ar = validLang(lang) === "ar"
+  var options = [{value: "", label: ar ? "كل البلدان" : "All countries"}]
+  for (var i = 0; countries && i < countries.length; i++) {
+    var c = countries[i]
+    options.push({value: c.code, label: ar ? (c.nameAr + " · " + c.code) : (c.name + (c.code === "US" ? " · USA" : ""))})
   }
-  if (!schedule || !schedule.length) return empty
+  return options
+}
 
-  var nowMs = now.getTime()
-  var nowFraction = dayFraction(now)
-
-  // Build ordered markers for the day; for "previous" include sunrise.
-  var markers = []
-  for (var i = 0; i < schedule.length; i++) {
-    markers.push({
-      id: schedule[i].id,
-      date: schedule[i].date,
-      fraction: dayFraction(schedule[i].date),
-      isSunrise: schedule[i].id === "sunrise"
-    })
+function cityPresetOptions(cities, code, lang) {
+  var options = []
+  for (var i = 0; cities && i < cities.length; i++) {
+    if (!code || cities[i].countryCode === code)
+      options.push({value: String(i), label: (validLang(lang) === "ar" && cities[i].nameAr ? cities[i].nameAr : cities[i].name) + " · " + cities[i].countryCode})
   }
+  return options
+}
 
-  var next = null
-  var prev = null
-  for (var j = 0; j < markers.length; j++) {
-    if (markers[j].isSunrise) continue
-    if (markers[j].date.getTime() > nowMs) {
-      next = markers[j]
-      // walk backward for previous non-empty marker (sunrise ok as prev visual)
-      for (var k = j - 1; k >= 0; k--) {
-        prev = markers[k]
-        break
-      }
-      break
-    }
-  }
-
-  // After Isha: previous is isha, next is tomorrow's fajr (use end-of-day + fajr)
-  if (!next) {
-    for (var p = markers.length - 1; p >= 0; p--) {
-      if (!markers[p].isSunrise) { prev = markers[p]; break }
-    }
-    // Aim the remaining arc toward midnight→fajr illusion: nextFraction = fajr + 1
-    var fajr = null
-    for (var f = 0; f < markers.length; f++) {
-      if (markers[f].id === "fajr") { fajr = markers[f]; break }
-    }
-    if (!prev || !fajr) return empty
-    var fromF = prev.fraction
-    var nextF = fajr.fraction + 1
-    var nowF = nowFraction
-    if (nowF < fromF) nowF += 1
-    var span = nextF - fromF
-    if (span <= 0) return empty
-    var elapsed = Math.max(0, Math.min(span, nowF - fromF))
-    return {
-      nowFraction: nowFraction,
-      fromFraction: fromF,
-      nextFraction: fajr.fraction,
-      nextId: "fajr",
-      prevId: prev.id,
-      remainingRatio: 1 - elapsed / span,
-      elapsedRatio: elapsed / span,
-      hasWindow: true,
-      wrapsMidnight: true
-    }
-  }
-
-  var fromFraction = prev ? prev.fraction : 0
-  var nextFraction = next.fraction
-  var span2 = nextFraction - fromFraction
-  if (span2 <= 0) span2 += 1
-  var nowF2 = nowFraction
-  if (nowF2 < fromFraction) nowF2 += 1
-  var elapsed2 = Math.max(0, Math.min(span2, nowF2 - fromFraction))
-
-  return {
-    nowFraction: nowFraction,
-    fromFraction: fromFraction,
-    nextFraction: nextFraction,
-    nextId: next.id,
-    prevId: prev ? prev.id : "",
-    remainingRatio: 1 - elapsed2 / span2,
-    elapsedRatio: elapsed2 / span2,
-    hasWindow: true,
-    wrapsMidnight: false
-  }
+function geocodingUrl(query, countryCode, lang) {
+  var code = /^[A-Z]{2}$/.test(String(countryCode || "")) ? countryCode : ""
+  return "https://geocoding-api.open-meteo.com/v1/search?count=5&format=json&language="
+    + validLang(lang) + "&name=" + encodeURIComponent(String(query || "").slice(0, 160))
+    + (code ? "&countryCode=" + code : "")
 }

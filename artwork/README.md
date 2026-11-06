@@ -1,11 +1,7 @@
-# Marketplace artwork
+# Noor marketplace cover
 
-The cover is generated using the built-in OpenAI ImageGen tool, then reviewed against actual plugin screenshots. The architectural background is an AI-generated Moroccan mosque courtyard, not a photograph of a named mosque. The English and Arabic preview PNGs at the project root are direct captures of the installed Omarchy plugin, cropped to its panel.
+The 1.4 cover follows **A moment of light**: a sculptural limestone mihrab, a precise shaft of afternoon sunlight, emerald typography and warm ivory. It is campaign artwork; the separate English and Arabic preview images show the actual plugin.
 
-## Initial prompt
+Generated with the built-in OpenAI ImageGen tool. The exact generation prompt is in [noor-prompt.txt](noor-prompt.txt) and embedded in the cover PNG. The architecture is generated, not a photograph of a named building. No stock photograph or bundled font asset is used.
 
-Use case: compositing. Edit target: the supplied Salat Times marketplace thumbnail. Preserve its 1600x900 landscape composition, exact title and supporting copy on the left, and readable plugin screenshot on the right. Change only the plain dark background and large flat circle into a magnificent photographic Moroccan mosque courtyard at blue hour, authentic carved arches and one elegant minaret, warm amber lantern light and subtle reflections on stone, deep charcoal navy atmosphere. Keep background subdued and dark beneath all copy so the existing warm peach title and cream text remain exceptionally legible. Sophisticated editorial architectural photography, realistic materials, restrained cinematic lighting, no extra text, no invented logos, no people, no watermark. The existing screenshot is a reference and must retain crisp text, proportions and rectangular edges.
-
-## Final prompt
-
-Use case: compositing. Final marketplace cover for Salat Times. Image 1 is the edit target: preserve exactly its magnificent Moroccan mosque blue-hour courtyard background, warm lantern lighting, carved arches, minaret, left-side title 'Salat Times', subtitle 'The next prayer, inside the day.' and feature line 'Qibla · Hijri · Habous · Adhan'. Image 2 is the CURRENT REAL PLUGIN SCREENSHOT, to replace the obsolete screenshot panel on the right in image 1. Insert image 2 as an exact, crisp, flat rectangular screenshot with its peach border intact: preserve all text, the corrected date '25 Jumada I 1448 AH', new compact countdown-and-small-dial composition, all prayer rows, refresh action and Settings. Do not redraw or invent screenshot content. Fit screenshot fully vertically with comfortable margins, aligned near the right edge like image 1. Keep title left large, mosque center visible. Landscape 16:9 composition. This is a refined architectural editorial product thumbnail, readable at small size. No extra text or watermark.
+The preview PNGs are direct captures of the running Omarchy plugin, cropped to its panel boundary. Their embedded metadata records capture provenance.

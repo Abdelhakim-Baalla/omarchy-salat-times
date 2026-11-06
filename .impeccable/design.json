@@ -1,78 +1,65 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-06T18:44:06.320061+00:00",
+  "generatedAt": "2026-11-06T19:01:33.406611+00:00",
   "title": "Design System: Salat Times",
   "extensions": {
     "platform": "Qt Quick / Quickshell / Omarchy",
-    "tokenSyntax": "Frontmatter values are normative QML expressions, not CSS. Evaluate in their source binding context.",
+    "tokenSyntax": "Frontmatter values are normative QML expressions evaluated in Panel.qml context. Noor is default; System is optional.",
     "colorMeta": {
+      "background": {
+        "role": "neutral",
+        "displayName": "Deep emerald / System surface"
+      },
       "foreground": {
         "role": "neutral",
-        "displayName": "Theme foreground",
-        "source": "Panel.qml: contentForeground"
+        "displayName": "Warm ivory / System foreground"
       },
       "accent": {
         "role": "primary",
-        "displayName": "Theme accent",
-        "source": "qs.Commons Color.accent"
+        "displayName": "Brass gold / System accent"
       },
       "muted": {
         "role": "neutral",
-        "displayName": "Muted theme foreground"
+        "displayName": "Muted reading foreground"
+      },
+      "hairline": {
+        "role": "primary",
+        "displayName": "Gold divider"
       },
       "next-surface": {
         "role": "primary",
-        "displayName": "Next prayer accent wash"
-      },
-      "hero-surface": {
-        "role": "primary",
-        "displayName": "Next-prayer surface wash",
-        "source": "Panel.qml: next-prayer Rectangle"
+        "displayName": "Next prayer wash"
       }
     },
     "typographyMeta": {
       "display": {
-        "purpose": "Remaining time, horizontal fit down to Style.space(22), with an explicit Time remaining caption."
-      },
-      "body": {
-        "purpose": "Language-aware labels and timetable times."
+        "purpose": "Centered remaining time; horizontal fit minimum Style.space(34)."
       },
       "prayer-name": {
-        "purpose": "Bold next prayer name on the primary tonal surface."
+        "purpose": "Arabic Kufi heading or English Noto Sans next-prayer name."
       }
     },
     "motion": [
       {
         "name": "settings-opacity",
         "value": "NumberAnimation { duration: Style.duration(160); easing.type: Easing.OutCubic }",
-        "purpose": "Settings opacity binding; visible and height change immediately."
-      },
-      {
-        "name": "dial-updates",
-        "value": "Canvas.requestPaint() on data, color, width and height changes",
-        "purpose": "No continuous repaint or ornamental motion."
+        "purpose": "Opacity only; visibility and height change immediately."
       }
     ],
     "native": {
       "surfaceOwner": "qs.Ui.KeyboardPanel",
       "controlStateOwner": "qs.Ui",
-      "tonalRamps": "Not generated: palette is selected dynamically by Omarchy.",
-      "breakpoints": "No web breakpoints; use fittedContentWidth/fittedContentHeight and vertical overflow.",
-      "previewPolicy": "Native QML source references replace HTML/CSS snippets. Do not synthesize web components.",
-      "evidence": [
-        ".impeccable/review/en.png",
-        ".impeccable/review/ar.png",
-        ".impeccable/review/settings.png",
-        ".impeccable/review/settings-lower.png"
-      ]
+      "previewPolicy": "Native QML references replace HTML/CSS approximations.",
+      "breakpoints": "No web breakpoints; fitted content dimensions and vertical overflow.",
+      "campaignSource": "artwork/noor-prompt.txt",
+      "campaignIntent": "Architectural mihrab cut by sunlight with oversized title on ivory; separate from product UI."
     }
   },
   "components": [
     {
-      "name": "Next-prayer surface",
+      "name": "Prayer window",
       "kind": "custom",
-      "refersTo": "next-prayer-surface",
-      "description": "154 logical-unit tonal rectangle: bold prayer name, 38-unit countdown, Time remaining caption and exact start beside the 104-unit day dial. Dimensions use Style.space.",
+      "description": "Hairline, next prayer and exact start above centered light countdown and explanatory caption.",
       "native": {
         "language": "qml",
         "source": "Panel.qml"
@@ -81,47 +68,36 @@
     {
       "name": "Prayer row",
       "kind": "custom",
-      "refersTo": "prayer-row",
-      "description": "Rectangle delegate: height Style.space(44), radius Style.cornerRadius; right-aligned Style.space(56) time column.",
+      "description": "Compact native timetable row with aligned name, status and numeric time.",
       "native": {
         "language": "qml",
         "source": "Panel.qml"
-      }
+      },
+      "refersTo": "prayer-row"
     },
     {
       "name": "Next prayer row",
       "kind": "custom",
-      "refersTo": "prayer-row-next",
-      "description": "Next prayer uses accent text, bold name/time, localized model status and accent alpha 0.12 fill, increasing to 0.22 when imminent.",
+      "description": "Taller accent-washed row with bold name/time; fill intensifies when imminent.",
+      "native": {
+        "language": "qml",
+        "source": "Panel.qml"
+      },
+      "refersTo": "prayer-row-next"
+    },
+    {
+      "name": "Worldwide setup",
+      "kind": "custom",
+      "description": "Country and offline localized city selectors, regional method suggestion, manual override and search feedback.",
       "native": {
         "language": "qml",
         "source": "Panel.qml"
       }
     },
     {
-      "name": "Day dial",
+      "name": "Native settings",
       "kind": "custom",
-      "refersTo": "day-dial",
-      "description": "Small adjacent 104 logical-unit Canvas with event-driven painting and real 24-hour fractions; exact next start sits at its center.",
-      "native": {
-        "language": "qml",
-        "source": "DayDial.qml"
-      }
-    },
-    {
-      "name": "Stepper",
-      "kind": "custom",
-      "refersTo": "stepper-value",
-      "description": "Row of native PanelActionButton minus/plus and centered PlainLabel value.",
-      "native": {
-        "language": "qml",
-        "source": "StepperRow.qml"
-      }
-    },
-    {
-      "name": "Theme controls",
-      "kind": "custom",
-      "description": "Reuse qs.Ui Button, Toggle, Dropdown, SearchableDropdown, ButtonGroup and TextField with live foreground/accent/fontFamily.",
+      "description": "Appearance, contextual Habous, Hijri, coordinates, calculation and reminder controls.",
       "native": {
         "language": "qml",
         "source": "Panel.qml"
@@ -130,46 +106,45 @@
     {
       "name": "Bar widget",
       "kind": "custom",
-      "description": "qs.Ui WidgetButton with native active imminent state and three mouse-button actions.",
+      "description": "Native active imminent state, language-aware font and three mouse actions.",
       "native": {
         "language": "qml",
         "source": "BarWidget.qml"
       }
-    },
-    {
-      "name": "Location and calendar settings",
-      "kind": "custom",
-      "description": "Native worldwide city search with busy, empty and connection feedback; ±2-day Hijri stepper; labeled unmirrored latitude/longitude fields and validated offline Apply coordinates action.",
-      "native": {
-        "language": "qml",
-        "source": "Panel.qml"
-      }
     }
   ],
   "narrative": {
-    "northStar": "The daily prayer instrument",
-    "overview": "A compact native prayer timetable that belongs to the current Omarchy desktop. The next prayer and explicit time remaining lead inside a tonal rectangle; a small adjacent day ring provides context. Its arc represents the current prayer window. The theme supplies the font, foreground, surface, and accent.",
+    "northStar": "A moment of light",
+    "overview": "Noor expresses the prayer window through generous numerals, intentional Arabic typography and a clear timetable. Deep emerald grounds warm ivory text; brass gold identifies the next prayer and its start. The centered light countdown is the primary answer, with a short caption explaining its meaning.\n\nThe implementation is native Qt Quick / Quickshell on Omarchy. Noor is the persisted default appearance; System colors are an explicit alternative. Campaign direction uses a sculptural mihrab and sunlight, separate from the working interface. The user rejected the former ring and generic screenshot-on-mosque cover.",
     "keyCharacteristics": [
-      "Theme-bound native typography and color",
-      "Aligned times with explicit next-prayer emphasis",
-      "Flat tonal surfaces and restrained motion"
+      "Typographic hierarchy with distinct Arabic heading and body families",
+      "Emerald, ivory and gold by default; optional live System colors",
+      "Clear aligned timetable with a taller next-prayer row",
+      "Flat native surfaces and restrained motion"
     ],
     "rules": [
       {
-        "name": "The Theme Rule",
-        "body": "Preserve dynamic theme expressions; a screenshot’s colors are evidence of one theme, not a new palette.",
+        "name": "The Appearance Rule",
+        "body": "Preserve the Noor/System conditional bindings. Noor is an authored palette; System mode evaluates the current Omarchy colors instead of a screenshot palette.",
         "section": "colors"
+      },
+      {
+        "name": "The Numeric Rule",
+        "body": "Keep schedule numerals right-aligned and unmirrored; apply reading alignment to language-bearing labels. Do not substitute a decorative clock face for the countdown.",
+        "section": "typography"
       }
     ],
     "dos": [
-      "Do preserve live Omarchy theme bindings.",
-      "Do keep Arabic labels readable and numeric times unmirrored.",
-      "Do show the next prayer and its exact time before settings."
+      "Do preserve Noor as default and System colors as an explicit alternative.",
+      "Do use the implemented Arabic heading/body families and Noto Sans numerals.",
+      "Do keep country selection and offline city setup visible before contextual Morocco controls.",
+      "Do keep native Qt Quick controls and Omarchy scale bindings."
     ],
     "donts": [
-      "Don’t introduce a fixed palette or bundled display font.",
-      "Don’t add glow, ornamental clock motion, or a reveal that delays prayer data.",
-      "Don’t replace native shared controls with web approximations."
+      "Don’t restore the rejected ring or a decorative clock face.",
+      "Don’t put screenshot-on-mosque artwork inside the working interface.",
+      "Don’t describe this native Linux panel as a web or mobile application.",
+      "Don’t add glow or a reveal that delays prayer information."
     ]
   }
 }

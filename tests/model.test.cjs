@@ -55,3 +55,24 @@ for (let i = 0; i < 1500; i++) {
   assert.ok(h.day >= 1 && h.day <= 30 && h.month >= 1 && h.month <= 12, `Invalid Hijri date on ${date}`);
 }
 console.log('Passed: null coordinate rejection, international country metadata and 1,500 consecutive Hijri dates.');
+// Country filtering and offline setup are shipped data, not network requirements.
+const countries = JSON.parse(readFileSync(path.join(__dirname, '../countries.json'), 'utf8'));
+const presets = JSON.parse(readFileSync(path.join(__dirname, '../city-presets.json'), 'utf8'));
+assert.equal(countries.length, 249);
+assert.equal(new Set(countries.map(c=>c.code)).size, countries.length);
+for (const [country,method] of [['SA','Makkah'],['EG','Egypt'],['US','ISNA'],['MY','Malaysia'],['ID','Indonesia']]) {
+  assert.equal(context.methodForCountry(country),method);
+  assert.ok(presets.some(p=>p.countryCode===country),`Missing city for ${country}`);
+}
+assert.match(context.geocodingUrl('Medina','SA','ar'), /countryCode=SA/);
+assert.match(context.geocodingUrl('Cairo','EG','en'), /language=en/);
+assert.doesNotMatch(context.geocodingUrl('City','<bad>','en'), /countryCode=/);
+for(const city of presets) {
+  assert.ok(countries.some(c=>c.code===city.countryCode));
+  assert.ok(Math.abs(city.latitude)<=90 && Math.abs(city.longitude)<=180);
+  const prayers=context.daySchedule(new Date(2026,10,6),city.latitude,city.longitude,context.methodForCountry(city.countryCode),'Standard',0);
+  assert.equal(prayers.length,6);
+  assert.ok(prayers.every(p=>Number.isFinite(p.date.getTime())),city.name);
+  assert.ok(prayers.every((p,i)=>i===0||p.date>=prayers[i-1].date),city.name);
+}
+console.log(`Passed: ${countries.length} countries/territories, ${presets.length} offline city presets, country filters and regional calculation suggestions.`);

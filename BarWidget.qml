@@ -77,6 +77,11 @@ BarWidget {
       root.open()
       if (panelLoader.item) panelLoader.item.settingsOpen = true
     }
+    function country(code: string): void {
+      if (!panelLoader.item || !/^[A-Z]{2}$/.test(code)) return
+      root.open()
+      panelLoader.item.showCityOptions(code)
+    }
   }
 
   WidgetButton {
@@ -84,6 +89,7 @@ BarWidget {
     anchors.fill: parent
     bar: root.bar
     text: root.displayText
+    fontFamily: root.salat && root.salat.lang === "ar" ? "Noto Sans Arabic" : (root.bar ? root.bar.fontFamily : Style.font.family)
     horizontalMargin: 8.75
     verticalPadding: 8.75
     tooltipText: root.tooltipText()
