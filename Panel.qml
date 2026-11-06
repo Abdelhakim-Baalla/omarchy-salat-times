@@ -712,6 +712,7 @@ Ui.Panel {
             // ---- Location / Habous city
             PanelSectionHeader {
               text: root.arabic ? "المصدر المغربي · اختياري" : "Morocco source · optional"
+              visible: !root.countryFilter || root.countryFilter === "MA"
               foreground: root.contentForeground
               fontFamily: root.contentFontFamily
             }
@@ -719,6 +720,7 @@ Ui.Panel {
             Toggle {
               width: parent.width
               label: root.arabic ? "مصدر حبوس الرسمي" : "Official Habous source"
+              visible: !root.countryFilter || root.countryFilter === "MA"
               description: root.arabic
                 ? "مواقيت وزارة الأوقاف المغربية"
                 : "Morocco Ministry of Habous prayer tables"
@@ -737,7 +739,7 @@ Ui.Panel {
             SearchableDropdown {
               id: habousCityDropdown
               width: parent.width
-              visible: root.salat ? root.salat.useHabous : true
+              visible: (!root.countryFilter || root.countryFilter === "MA") && (root.salat ? root.salat.useHabous : true)
               label: root.arabic ? "مدينة حبوس" : "Habous city"
               placeholderText: root.arabic ? "ابحث عن مدينة…" : "Search city…"
               value: root.salat ? String(root.salat.habousCityId) : "117"

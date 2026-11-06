@@ -77,6 +77,12 @@ BarWidget {
       root.open()
       if (panelLoader.item) panelLoader.item.settingsOpen = true
     }
+    function country(code: string): void {
+      if (!panelLoader.item || !/^[A-Z]{2}$/.test(code)) return
+      panelLoader.item.countryFilter = code
+      panelLoader.item.settingsOpen = true
+      root.open()
+    }
   }
 
   WidgetButton {
