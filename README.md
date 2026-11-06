@@ -4,6 +4,10 @@ Prayer times for the Omarchy bar: the next salah, the time remaining, the Hijri 
 
 ![Salat Times panel](preview.png)
 
+![Salat Times in Arabic](preview-ar.png)
+
+![Salat Times listing card](marketplace.png)
+
 ## Install
 
 Requires Omarchy Quattro with its Quickshell plugin runtime and `curl`. Qt Quick Controls and the Omarchy `qs.Commons` / `qs.Ui` modules are supplied by the desktop. No additional service, installer, root access, or remote build is required.
