@@ -1,6 +1,6 @@
 # Salat Times for Omarchy
 
-A quiet, theme-aware prayer timetable for the Omarchy Quattro bar. See the next prayer, time remaining, Hijri date, and the full day without leaving your desktop.
+Prayer times for the Omarchy bar: the next salah, the time remaining, the Hijri date, qibla, and the full day. Habous tables, AlAdhan, and offline calculation stay available when you are online or not.
 
 ![Salat Times panel](preview.png)
 
@@ -25,7 +25,9 @@ omarchy bar move abdelhakim.salat --section centerEnd
 - Middle-click, the language button, or `A` switches Arabic and English.
 - `S` opens settings; Tab moves through settings controls and Escape returns to the timetable.
 - `E` edits a location; `M` cycles calculation methods; `B` cycles bar styles.
-- The day dial places prayers clockwise around a 24-hour day starting at midnight. The bright path is elapsed time since the previous prayer; its center shows the next start time.
+- The day ring places prayers clockwise from midnight. The bright arc is only the current prayer window, and the countdown sits inside the ring.
+- Friday Dhuhr reads as Jumu'ah. Rows mark passed, now, and next. In Ramadan, a line gives suhoor or iftar.
+- Qibla is the bearing from your coordinates to the Kaaba.
 
 ## Settings
 

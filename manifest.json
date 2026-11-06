@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "id": "abdelhakim.salat",
   "name": "Salat Times",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "author": "abdelhakim",
-  "description": "Theme-aware prayer times with Arabic and English, Habous tables, offline calculation, a daily schedule, and adhan reminders.",
+  "description": "Prayer times, salah, and adhan for Omarchy: Habous and offline calculation, Hijri date, qibla, Jumu'ah, and Ramadan iftar.",
   "kinds": [
     "service",
     "bar-widget"
@@ -16,7 +16,7 @@
   },
   "barWidget": {
     "displayName": "Salat Times",
-    "description": "Next prayer countdown with a full daily schedule panel",
+    "description": "Next salah countdown inside a day ring, with qibla and the full prayer timetable",
     "category": "Time",
     "allowMultiple": false,
     "defaultSection": "center"

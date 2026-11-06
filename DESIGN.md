@@ -48,7 +48,7 @@ components:
     height: "Style.space(40)"
     padding: "0 Style.space(12)"
   day-dial:
-    size: "Style.space(128)"
+    size: "Style.space(232)"
   stepper-value:
     width: "Style.space(36)"
     height: "Style.space(22)"
@@ -58,9 +58,9 @@ components:
 
 ## Overview
 
-**Creative North Star: "Today’s prayer timetable"**
+**Creative North Star: "The countdown inside the day"**
 
-A compact native prayer timetable that belongs to the current Omarchy desktop. Clear prayer times lead; the theme supplies the font, foreground, surface, and accent. The 24-hour orbit explains the day without competing with the countdown.
+A compact native prayer timetable that belongs to the current Omarchy desktop. The remaining time is inscribed in the day ring, and that ring’s arc is only the current prayer window. The theme supplies the font, foreground, surface, and accent.
 
 **Key Characteristics:**
 
@@ -92,7 +92,7 @@ Use the hosting bar’s font family with `Style.font.family` as fallback. The co
 
 `KeyboardPanel` fits a preferred content width of `Style.space(400)` and fits height to the available screen. The column uses stack spacing; overview uses the same rhythm. Header and settings sections use section spacing. Vertical scrolling appears only when content overflows; horizontal scrolling is disabled.
 
-The hero height is the greater of `Style.space(142)` and countdown height. The dial is square; the countdown receives remaining width after the dial and hero gap. Schedule rows use tight spacing, horizontal section padding, row gaps, and a fixed `Style.space(56)` time column. Names elide before times. Settings replace the overview and retain the header and settings action; they are not a second dashboard.
+The hero is a centered day ring of `Style.space(232)`. The prayer name, countdown, and exact start sit in the hole. Schedule rows use tight spacing, horizontal section padding, row gaps, a `Style.space(64)` state column, and a fixed `Style.space(56)` time column. Names elide before times. Qibla sits with the date. A Ramadan suhoor or iftar line appears only in that month. Settings replace the overview and retain the header and settings action; they are not a second dashboard.
 
 ## Elevation & Depth
 
