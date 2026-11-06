@@ -21,7 +21,7 @@ Item {
 
   // --------------------------------------------------------- settings
   property string method: "Morocco"
-  property string appearance: "noor"
+  property string appearance: "system"
   property string countryCode: ""
   property bool autoMethod: true
   property var countries: []
@@ -576,7 +576,7 @@ Item {
     if (loaded) return
     var data = {}
     try { data = JSON.parse(raw || "{}") } catch (e) { data = {} }
-    appearance = data.appearance === "system" ? "system" : "noor"
+    appearance = "system" // Follow the desktop, including upgrades from the former Noor palette.
     countryCode = /^[A-Z]{2}$/.test(String(data.countryCode || "")) ? data.countryCode : ""
     autoMethod = data.autoMethod === undefined ? true : data.autoMethod === true
     hijriAdjustment = Model.clampInt(data.hijriAdjustment, 0, -2, 2)
@@ -752,7 +752,7 @@ Item {
     }
 
     function theme(id: string): string {
-      if (id === "noor" || id === "system") root.appearance = id
+      if (id === "noor" || id === "system") root.appearance = "system"
       return root.appearance
     }
     function language(id: string): string {
