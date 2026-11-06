@@ -70,6 +70,10 @@ BarWidget {
     function open(): void { root.open() }
     function close(): void { root.close() }
     function toggle(): void { root.togglePanel() }
+    function settings(): void {
+      root.open()
+      if (panelLoader.item) panelLoader.item.settingsOpen = true
+    }
   }
 
   WidgetButton {

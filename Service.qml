@@ -113,7 +113,7 @@ Item {
       latitude = Number(weatherLocation.latitude)
       longitude = Number(weatherLocation.longitude)
       if (weatherLocation.name) locationName = weatherLocation.name
-      if (!Model.findHabousCity(habousCities, weatherLocation.name)) useHabous = false
+      if (habousCities.length && !Model.findHabousCity(habousCities, weatherLocation.name)) useHabous = false
     }
     resolveHabousCity()
   }
@@ -137,6 +137,11 @@ Item {
         locationName = habousCities[i].name
         useWeatherLocation = false
         useHabous = true
+        if (onlineEnabled) {
+          cityCoordinateFetch.running = false
+          cityCoordinateFetch.cityName = habousCityName
+          cityCoordinateFetch.running = true
+        }
         recompute()
         scheduleSave()
         return
@@ -347,6 +352,28 @@ Item {
       root.resolveHabousCity()
     }
     onLoadFailed: root.habousCities = []
+  }
+
+  // Explicit city selection also updates the offline fallback and Qibla.
+  Process {
+    id: cityCoordinateFetch
+    property string cityName: ""
+    command: ["curl", "-fsS", "--max-time", "6", "--max-filesize", "262144",
+      "https://geocoding-api.open-meteo.com/v1/search?count=5&language=en&countryCode=MA&name=" + encodeURIComponent(cityName)]
+    stdout: StdioCollector {
+      onStreamFinished: {
+        if (!root.useHabous || root.habousCityName !== cityCoordinateFetch.cityName) return
+        var results = Model.parseGeocodingResults(text)
+        for (var i = 0; i < results.length; i++) {
+          if (Model.normalizeCityKey(results[i].name) !== Model.normalizeCityKey(cityCoordinateFetch.cityName)) continue
+          root.latitude = results[i].latitude
+          root.longitude = results[i].longitude
+          root.recompute()
+          root.scheduleSave()
+          return
+        }
+      }
+    }
   }
 
   function setMethod(id) {
@@ -566,6 +593,7 @@ Item {
     habousFetch.running = false
     todayFetch.running = false
     tomorrowFetch.running = false
+    cityCoordinateFetch.running = false
     fetching = false
     if (onlineEnabled) recompute()
     else recomputeOffline()

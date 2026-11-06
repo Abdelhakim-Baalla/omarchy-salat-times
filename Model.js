@@ -695,7 +695,7 @@ function parseGeocodingResults(raw) {
     var out = []
     for (var i = 0; i < Math.min(results.length, 5); i++) {
       var r = results[i]
-      if (!r || !r.name || r.latitude === undefined || r.longitude === undefined) continue
+      if (!r || !r.name || r.latitude === undefined || r.longitude === undefined || r.latitude === null || r.longitude === null) continue
       var lat = Number(r.latitude), lng = Number(r.longitude)
       if (!isFinite(lat) || !isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) continue
       var region = [r.admin1, r.country].filter(function(part) { return !!part }).join(", ")
