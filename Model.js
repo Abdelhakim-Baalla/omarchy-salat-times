@@ -273,9 +273,80 @@ function methodOptions() {
   return out
 }
 
-function prayerName(id, lang) {
+function prayerName(id, lang, when) {
+  if (id === "dhuhr" && when && typeof when.getDay === "function" && when.getDay() === 5)
+    return validLang(lang) === "ar" ? "الجمعة" : "Jumu'ah"
   var table = NAMES[validLang(lang)] || NAMES.en
   return table[id] || id
+}
+
+function statusLabel(status, lang) {
+  if (status === "next" || status === "now" || status === "passed")
+    return prayerName(status, lang)
+  return ""
+}
+
+// Kaaba, Masjid al-Haram. Bearing is degrees clockwise from true north.
+var KAABA_LAT = 21.422487
+var KAABA_LNG = 39.826206
+
+function qiblaBearing(lat, lng) {
+  var phi = dtr(Number(lat) || 0)
+  var dLon = dtr(KAABA_LNG - (Number(lng) || 0))
+  var y = Math.sin(dLon)
+  var x = Math.cos(phi) * Math.tan(dtr(KAABA_LAT)) - Math.sin(phi) * Math.cos(dLon)
+  if (!isFinite(x) || !isFinite(y)) return 0
+  return fixAngle(rtd(Math.atan2(y, x)))
+}
+
+function qiblaCardinal(bearing, lang) {
+  var en = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+  var ar = ["شمال", "شمال شرق", "شرق", "جنوب شرق", "جنوب", "جنوب غرب", "غرب", "شمال غرب"]
+  var idx = Math.round(fixAngle(Number(bearing) || 0) / 45) % 8
+  return validLang(lang) === "ar" ? ar[idx] : en[idx]
+}
+
+function qiblaLabel(lat, lng, lang) {
+  var b = Math.round(qiblaBearing(lat, lng)) % 360
+  if (b < 0) b += 360
+  if (validLang(lang) === "ar") return "القبلة " + b + "° " + qiblaCardinal(b, lang)
+  return "Qibla " + b + "° " + qiblaCardinal(b, lang)
+}
+
+function fastingHint(now, schedule, lang) {
+  if (!now || isNaN(now.getTime()) || gregorianToHijri(now).month !== 9) return ""
+  var fajr = null
+  var maghrib = null
+  for (var i = 0; schedule && i < schedule.length; i++) {
+    if (schedule[i].id === "fajr") fajr = schedule[i]
+    if (schedule[i].id === "maghrib") maghrib = schedule[i]
+  }
+  if (!fajr || !maghrib || !fajr.date || !maghrib.date) return ""
+  var t = now.getTime()
+  var ar = validLang(lang) === "ar"
+  if (t < fajr.date.getTime())
+    return ar ? ("السحور حتى " + formatClock(fajr.date, true)) : ("Suhoor until " + formatClock(fajr.date, true))
+  if (t < maghrib.date.getTime())
+    return ar ? ("الإفطار عند " + formatClock(maghrib.date, true)) : ("Iftar at " + formatClock(maghrib.date, true))
+  return ""
+}
+
+// Prayers whose start fell inside the recent window. A one-second poll
+// misses adhan if the machine wakes after the prayer; twenty seconds catches it
+// without repeating an hour later.
+function duePrayers(schedule, now, withinMs) {
+  var windowMs = Number(withinMs)
+  if (!isFinite(windowMs) || windowMs <= 0) windowMs = 20000
+  var t = now && now.getTime ? now.getTime() : 0
+  var out = []
+  if (!schedule) return out
+  for (var i = 0; i < schedule.length; i++) {
+    var item = schedule[i]
+    if (!item || item.id === "sunrise" || !item.date || isNaN(item.date.getTime())) continue
+    var age = t - item.date.getTime()
+    if (age >= 0 && age <= windowMs) out.push(item)
+  }
+  return out
 }
 
 function prayerGlyph(id) {
@@ -376,21 +447,29 @@ function computeTimes(date, lat, lng, timezone, methodId, madhab) {
       times.isha = sunAngleTime(method.isha, times.isha / 24, jDate, lat, "cw")
   }
 
-  // Apply timezone + longitude
+  // Apply timezone + longitude. NaN stays NaN until the polar fallback below.
   var offset = timezone - lng / 15
   var out = {}
   for (var k = 0; k < PRAYER_IDS.length; k++) {
     var id = PRAYER_IDS[k]
-    out[id] = fixHour(times[id] + offset)
+    out[id] = isFinite(times[id]) ? fixHour(times[id] + offset) : NaN
   }
 
-  // High-latitude: if night is too long and fajr/isha invalid-ish, use 1/7 of night
+  if (!isFinite(out.dhuhr)) out.dhuhr = fixHour(12 + (isFinite(offset) ? offset : 0))
+  // Polar day or night: the sun never crosses the horizon, so sunrise and
+  // maghrib are not real events. Park a short day on solar noon so the
+  // timetable stays finite and ordered instead of showing an invalid clock.
+  if (!isFinite(out.sunrise)) out.sunrise = fixHour(out.dhuhr - 0.1)
+  if (!isFinite(out.maghrib)) out.maghrib = fixHour(out.dhuhr + 0.1)
+
   var night = timeDiff(out.maghrib, out.sunrise)
-  if (night > 0 && (out.fajr > out.sunrise || out.isha < out.maghrib || night > 18)) {
-    var portion = night / 7
-    if (out.fajr > out.sunrise || !isFinite(out.fajr)) out.fajr = out.sunrise - portion
-    if (out.isha < out.maghrib || !isFinite(out.isha)) out.isha = out.maghrib + portion
-  }
+  if (!(night > 0)) night = 12
+  if (out.fajr > out.sunrise || !isFinite(out.fajr) || night > 18)
+    out.fajr = fixHour(out.sunrise - night / 7)
+  if (out.isha < out.maghrib || !isFinite(out.isha) || night > 18)
+    out.isha = fixHour(out.maghrib + night / 7)
+  if (!isFinite(out.asr))
+    out.asr = fixHour(out.dhuhr + timeDiff(out.dhuhr, out.maghrib) / 2)
 
   return out
 }
@@ -503,25 +582,30 @@ function findCurrentWindow(schedule, now) {
 
 function enrichSchedule(schedule, now, lang) {
   var next = findNext(schedule, now)
+  var currentWindow = findCurrentWindow(schedule, now)
+  var currentId = currentWindow && currentWindow.current ? currentWindow.current.id : ""
   var rows = []
   for (var i = 0; i < schedule.length; i++) {
     var item = schedule[i]
     var isNext = next && next.id === item.id
+    var isNow = !isNext && currentId === item.id
     var passed = item.date.getTime() <= now.getTime()
-    var status = isNext ? "next" : (passed ? "passed" : "upcoming")
+    var status = isNext ? "next" : (isNow ? "now" : (passed ? "passed" : "upcoming"))
     rows.push({
       id: item.id,
-      name: prayerName(item.id, lang),
-      nameEn: prayerName(item.id, "en"),
-      nameAr: prayerName(item.id, "ar"),
+      name: prayerName(item.id, lang, item.date),
+      nameEn: prayerName(item.id, "en", item.date),
+      nameAr: prayerName(item.id, "ar", item.date),
       glyph: prayerGlyph(item.id),
       date: item.date,
       hours: item.hours,
       time: formatClock(item.date, true),
       status: status,
+      statusLabel: statusLabel(status, lang),
       isSunrise: item.id === "sunrise",
       isNext: isNext,
-      passed: passed && !isNext
+      isNow: isNow,
+      passed: passed && !isNext && !isNow
     })
   }
   return rows
@@ -541,7 +625,7 @@ function nextAfterSchedule(todaySchedule, tomorrowSchedule, now) {
 
 function barLabel(style, nextInfo, now, lang) {
   if (!nextInfo || !nextInfo.prayer) return prayerGlyph("salat")
-  var name = prayerName(nextInfo.prayer.id, lang)
+  var name = prayerName(nextInfo.prayer.id, lang, nextInfo.prayer.date)
   var remaining = nextInfo.prayer.date.getTime() - now.getTime()
   var glyph = prayerGlyph(nextInfo.prayer.id)
   var s = validBarStyle(style)
@@ -653,13 +737,15 @@ function dateKey(date) {
   return date.getFullYear() + "-" + pad2(date.getMonth() + 1) + "-" + pad2(date.getDate())
 }
 
-function dialPoints(schedule) {
+function dialPoints(schedule, now) {
+  var t = now && now.getTime ? now.getTime() : NaN
   var points = []
   for (var i = 0; i < schedule.length; i++) {
     points.push({
       id: schedule[i].id,
       fraction: dayFraction(schedule[i].date),
-      isSunrise: schedule[i].id === "sunrise"
+      isSunrise: schedule[i].id === "sunrise",
+      passed: isFinite(t) && schedule[i].date.getTime() <= t
     })
   }
   return points
