@@ -47,7 +47,7 @@ Ui.Panel {
   property bool settingsOpen: false
   onSettingsOpenChanged: {
     if (settingsOpen) Qt.callLater(function() { onlineToggle.forceActiveFocus() })
-    else keyCatcher.forceActiveFocus()
+    else { root.closeMenus(); keyCatcher.forceActiveFocus() }
   }
   property string locationDraft: ""
   property var locationSuggestions: []
@@ -80,6 +80,14 @@ Ui.Panel {
       return root.bar.switchPanelFrom(root.barIdentity, direction)
     return false
   }
+
+  function closeMenus() {
+    countryDropdown.close()
+    cityPresetDropdown.close()
+    habousCityDropdown.close()
+    methodDropdown.close()
+  }
+  onOpenedChanged: if (!opened) closeMenus()
 
   function showCityOptions(code) {
     countryFilter = code
