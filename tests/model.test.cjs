@@ -35,3 +35,15 @@ const dhuhr = rows.find(r => r.id === 'dhuhr');
 assert.equal(dhuhr.name, "Jumu'ah");
 assert.ok(['passed', 'now', 'next'].includes(dhuhr.status));
 console.log('Passed: bounded geocoding, invalid coordinates, literal markup, offset limits, six ordered offline prayer times, Jumu\'ah, qibla, and adhan window.');
+// Calendar regressions: the old floor/truncation conversion was months out.
+for (const [date, expected] of [['2024-03-11T12:00:00',[1445,9,1]],['2024-04-10T12:00:00',[1445,10,1]],['2026-11-06T12:00:00',[1448,5,25]]]) {
+  const h = run(`gregorianToHijri(new Date('${date}'))`);
+  assert.deepEqual([h.year,h.month,h.day], expected);
+}
+assert.equal(run("gregorianToHijri(new Date(2024,3,10), -1).month"), 9);
+assert.equal(run("parseHm('25:00')"), null);
+assert.equal(run("parseHm('12:70')"), null);
+assert.equal(run("parseLocationFile('{\"latitude\":91,\"longitude\":0}').latitude"), null);
+const remote = JSON.stringify({data:{timings:Object.fromEntries(['Fajr','Sunrise','Dhuhr','Asr','Maghrib','Isha'].map(k=>[k,'2026-11-06T12:00:00+09:00']))}});
+assert.equal(run(`scheduleFromAladhan(${JSON.stringify(remote)},new Date(2026,10,6))[0].date.getTime()`), Date.parse('2026-11-06T03:00:00Z'));
+console.log('Passed: Hijri known dates and adjustment, invalid clocks, weather coordinate bounds, timezone-aware API timestamps.');

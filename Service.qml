@@ -27,6 +27,8 @@ Item {
   property string barStyle: "full"
   property int notifyLeadMinutes: 10
   property int offsetMinutes: 0
+  property int hijriAdjustment: 0
+  property string refreshError: ""
   property bool notifyAtAdhan: true
   property bool notifyLead: true
   property bool useWeatherLocation: true
@@ -69,11 +71,11 @@ Item {
   readonly property string nextGlyph: nextPrayer ? Model.prayerGlyph(nextPrayer.id) : Model.prayerGlyph("salat")
   readonly property string nextTime: nextPrayer ? Model.formatClock(nextPrayer.date, true) : "--:--"
 
-  readonly property string hijriLabel: Model.formatHijri(nowDate, lang)
+  readonly property string hijriLabel: Model.formatHijri(nowDate, lang, hijriAdjustment)
   readonly property string gregorianLabel: Qt.formatDate(nowDate, "dddd d MMMM yyyy")
   readonly property string locationLabel: locationName !== "" ? locationName : (latitude.toFixed(2) + ", " + longitude.toFixed(2))
   readonly property string qiblaLabel: Model.qiblaLabel(latitude, longitude, lang)
-  readonly property string fastingHint: Model.fastingHint(nowDate, todaySchedule, lang)
+  readonly property string fastingHint: Model.fastingHint(nowDate, todaySchedule, lang, hijriAdjustment)
   readonly property string methodLabel: Model.methodLabel(method)
   readonly property string barText: Model.barLabel(barStyle, nextInfo, nowDate, lang)
   readonly property string dayKey: Model.dateKey(nowDate)
@@ -110,6 +112,7 @@ Item {
       latitude = Number(weatherLocation.latitude)
       longitude = Number(weatherLocation.longitude)
       if (weatherLocation.name) locationName = weatherLocation.name
+      if (!Model.findHabousCity(habousCities, weatherLocation.name)) useHabous = false
     }
     resolveHabousCity()
   }
@@ -173,8 +176,22 @@ Item {
   }
 
   function recompute() {
-    if (!todaySchedule.length) recomputeOffline()
-    fetchOnline()
+    if (!loaded) return
+    // Cancel obsolete requests before changing location/method/date.
+    habousFetch.running = false
+    todayFetch.running = false
+    tomorrowFetch.running = false
+    fetching = false
+    _pendingToday = []
+    refreshError = ""
+    recomputeOffline()
+    refreshTimer.restart()
+  }
+
+  Timer {
+    id: refreshTimer
+    interval: 180
+    onTriggered: root.fetchOnline()
   }
 
   function fetchOnline() {
@@ -361,7 +378,9 @@ Item {
     method = ids[(i + 1) % ids.length]
   }
 
-  function setLocation(name, lat, lng) {
+  function setLocation(name, lat, lng, countryCode) {
+    if (!isFinite(Number(lat)) || !isFinite(Number(lng)) || Math.abs(Number(lat)) > 90 || Math.abs(Number(lng)) > 180) return
+    useHabous = countryCode === "MA" && Model.findHabousCity(habousCities, name) !== null
     useWeatherLocation = false
     locationName = String(name || "")
     latitude = Model.clampNumber(lat, latitude, -90, 90)
@@ -486,6 +505,7 @@ Item {
     if (loaded) return
     var data = {}
     try { data = JSON.parse(raw || "{}") } catch (e) { data = {} }
+    hijriAdjustment = Model.clampInt(data.hijriAdjustment, 0, -2, 2)
     method = Model.validMethod(data.method || "Morocco")
     madhab = Model.validMadhab(data.madhab || "Standard")
     lang = data.lang === "en" ? "en" : "ar"
@@ -515,7 +535,8 @@ Item {
 
   function flush() {
     stateFile.setText(JSON.stringify({
-      version: 1,
+      version: 2,
+      hijriAdjustment: hijriAdjustment,
       method: method,
       madhab: madhab,
       lang: lang,
@@ -547,6 +568,7 @@ Item {
     else recomputeOffline()
     scheduleSave()
   }
+  onHijriAdjustmentChanged: scheduleSave()
   onMethodChanged: { if (loaded) { recompute(); scheduleSave() } }
   onMadhabChanged: { if (loaded) { recompute(); scheduleSave() } }
   onLangChanged: {
@@ -592,7 +614,14 @@ Item {
         root.recomputeOffline()
       }
       // Midnight rollover: refetch once the day key flips
-      if (root._lastDayKey && root._lastDayKey !== root.dayKey) root.fetchOnline()
+      if (root._lastDayKey && root._lastDayKey !== root.dayKey) {
+        var kept = {}
+        for (var key in root.notifiedKeys)
+          if (key.indexOf(root.dayKey + ":") === 0) kept[key] = root.notifiedKeys[key]
+        root.notifiedKeys = kept
+        root.recompute()
+        root.scheduleSave()
+      }
       root._lastDayKey = root.dayKey
     }
   }

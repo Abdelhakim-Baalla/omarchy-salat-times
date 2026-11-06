@@ -13,9 +13,9 @@ var METHODS = {
   Tehran:  { fajr: 17.7, isha: 14,   maghrib: "angle", maghribAngle: 4.5, ishaInterval: 0, label: "Institute of Geophysics, Tehran", aladhan: 7 },
   Jafari:  { fajr: 16,   isha: 14,   maghrib: "angle", maghribAngle: 4, ishaInterval: 0,  label: "Shia Ithna Ashari", aladhan: 0 },
   // Maghreb phone apps usually track MWL/Egypt noon, then add ~+5 after zawal.
-  Morocco: { fajr: 18,   isha: 17,   maghrib: "angle", maghribAngle: 0, ishaInterval: 0,  label: "Morocco", aladhan: 3 },
-  Algeria: { fajr: 18,   isha: 17,   maghrib: "angle", maghribAngle: 0, ishaInterval: 0,  label: "Algeria", aladhan: 3 },
-  Tunisia: { fajr: 18,   isha: 18,   maghrib: "angle", maghribAngle: 0, ishaInterval: 0,  label: "Tunisia", aladhan: 5 }
+  Morocco: { fajr: 18,   isha: 17,   maghrib: "angle", maghribAngle: 0, ishaInterval: 0,  label: "Morocco", aladhan: 21 },
+  Algeria: { fajr: 18,   isha: 17,   maghrib: "angle", maghribAngle: 0, ishaInterval: 0,  label: "Algeria", aladhan: 19 },
+  Tunisia: { fajr: 18,   isha: 18,   maghrib: "angle", maghribAngle: 0, ishaInterval: 0,  label: "Tunisia", aladhan: 18 }
 }
 
 var METHOD_ORDER = ["Morocco", "MWL", "Egypt", "ISNA", "Makkah", "Karachi", "Tehran", "Jafari", "Algeria", "Tunisia"]
@@ -106,12 +106,13 @@ function aladhanUrl(lat, lng, methodId, madhab, offsetMinutes, date) {
     + "&longitude=" + encodeURIComponent(String(lng))
     + "&method=" + aladhanMethodId(methodId)
     + "&school=" + aladhanSchool(madhab)
+    + "&iso8601=true"
     + "&tune=" + tune
 }
 
 function parseHm(hm) {
-  var m = /^(\d{1,2}):(\d{2})/.exec(String(hm || ""))
-  if (!m) return null
+  var m = /^(?:\d{4}-\d{2}-\d{2}T)?(\d{1,2}):(\d{2})/.exec(String(hm || ""))
+  if (!m || Number(m[1]) > 23 || Number(m[2]) > 59) return null
   return { h: parseInt(m[1], 10), min: parseInt(m[2], 10) }
 }
 
@@ -133,10 +134,11 @@ function scheduleFromAladhan(raw, baseDate) {
       var id = PRAYER_IDS[i]
       var hm = parseHm(map[id])
       if (!hm) return null
-      var when = new Date(
-        baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate(),
-        hm.h, hm.min, 0, 0
-      )
+      // ISO timestamps retain the selected location’s UTC offset.
+      var when = /^\d{4}-\d{2}-\d{2}T/.test(String(map[id]))
+        ? new Date(map[id])
+        : new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate(), hm.h, hm.min, 0, 0)
+      if (isNaN(when.getTime())) return null
       schedule.push({ id: id, date: when, hours: hm.h + hm.min / 60, source: "aladhan" })
     }
     return schedule
@@ -313,8 +315,8 @@ function qiblaLabel(lat, lng, lang) {
   return "Qibla " + b + "° " + qiblaCardinal(b, lang)
 }
 
-function fastingHint(now, schedule, lang) {
-  if (!now || isNaN(now.getTime()) || gregorianToHijri(now).month !== 9) return ""
+function fastingHint(now, schedule, lang, adjustment) {
+  if (!now || isNaN(now.getTime()) || gregorianToHijri(now, adjustment).month !== 9) return ""
   var fajr = null
   var maghrib = null
   for (var i = 0; schedule && i < schedule.length; i++) {
@@ -635,36 +637,16 @@ function barLabel(style, nextInfo, now, lang) {
   return glyph + " " + name + " · " + formatCountdownShort(remaining)
 }
 
-// ---------------- Hijri (Kuwaiti algorithm) ----------------
-
-function gregorianToHijri(date) {
-  var gy = date.getFullYear()
-  var gm = date.getMonth() + 1
-  var gd = date.getDate()
-
-  var jd
-  if (gy > 1582 || (gy === 1582 && gm > 10) || (gy === 1582 && gm === 10 && gd > 14)) {
-    jd = Math.floor((1461 * (gy + 4800 + Math.floor((gm - 14) / 12))) / 4)
-      + Math.floor((367 * (gm - 2 - 12 * Math.floor((gm - 14) / 12))) / 12)
-      - Math.floor((3 * Math.floor((gy + 4900 + Math.floor((gm - 14) / 12)) / 100)) / 4)
-      + gd - 32075
-  } else {
-    jd = 367 * gy - Math.floor((7 * (gy + 5001 + Math.floor((gm - 9) / 7))) / 4)
-      + Math.floor((275 * gm) / 9) + gd + 1729777
-  }
-
-  var l = jd - 1948440 + 10632
-  var n = Math.floor((l - 1) / 10631)
-  l = l - 10631 * n + 354
-  var j = Math.floor((10985 - l) / 5316) * Math.floor((50 * l) / 17719)
-    + Math.floor(l / 5670) * Math.floor((43 * l) / 15238)
-  l = l - Math.floor((30 - j) / 15) * Math.floor((17719 * j) / 50)
-    - Math.floor(j / 16) * Math.floor((15238 * j) / 43) + 29
-  var hm = Math.floor((24 * l) / 355)
-  var hd = l - Math.floor((355 * hm) / 24)
-  var hy = 30 * n + j - 30
-
-  return { year: hy, month: hm, day: hd }
+// Tabular Islamic civil calendar. Local moon-sighting may differ: expose a
+// separate day adjustment instead of pretending an astronomical date is official.
+function gregorianToHijri(date, adjustment) {
+  var shifted = new Date(date.getFullYear(), date.getMonth(), date.getDate() + clampInt(adjustment, 0, -2, 2), 12)
+  var jdn = Math.floor(julian(shifted.getFullYear(), shifted.getMonth() + 1, shifted.getDate()) + 0.5)
+  var year = Math.floor((30 * (jdn - 1948440) + 10646) / 10631)
+  var start = 1948440 + 354 * (year - 1) + Math.floor((3 + 11 * year) / 30)
+  var month = Math.min(12, Math.floor((jdn - start) / 29.5) + 1)
+  var day = jdn - start - Math.ceil(29.5 * (month - 1)) + 1
+  return { year: year, month: month, day: day }
 }
 
 var HIJRI_MONTHS_EN = [
@@ -677,8 +659,8 @@ var HIJRI_MONTHS_AR = [
   "رجب", "شعبان", "رمضان", "شوال", "ذو القعدة", "ذو الحجة"
 ]
 
-function formatHijri(date, lang) {
-  var h = gregorianToHijri(date)
+function formatHijri(date, lang, adjustment) {
+  var h = gregorianToHijri(date, adjustment)
   var months = validLang(lang) === "ar" ? HIJRI_MONTHS_AR : HIJRI_MONTHS_EN
   var monthName = months[Math.max(0, Math.min(11, h.month - 1))]
   if (validLang(lang) === "ar") return h.day + " " + monthName + " " + h.year + " هـ"
@@ -692,7 +674,7 @@ function parseLocationFile(raw) {
     if (!data || typeof data !== "object") return unset
     var latitude = parseFloat(data.latitude)
     var longitude = parseFloat(data.longitude)
-    var hasCoordinates = !isNaN(latitude) && !isNaN(longitude)
+    var hasCoordinates = isFinite(latitude) && isFinite(longitude) && Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180
     return {
       name: typeof data.name === "string" ? data.name.replace(/^\s+|\s+$/g, "") : "",
       latitude: hasCoordinates ? latitude : null,
@@ -720,7 +702,9 @@ function parseGeocodingResults(raw) {
         name: String(r.name).slice(0, 160),
         description: region.slice(0, 240),
         latitude: lat,
-        longitude: lng
+        longitude: lng,
+        countryCode: String(r.country_code || "").slice(0, 2),
+        timezone: String(r.timezone || "").slice(0, 80)
       })
     }
     return out
