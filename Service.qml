@@ -751,6 +751,15 @@ Item {
       })
     }
 
+    function theme(id: string): string {
+      if (id === "noor" || id === "system") root.appearance = id
+      return root.appearance
+    }
+    function language(id: string): string {
+      if (id === "ar" || id === "en") root.setLang(id)
+      return root.lang
+    }
+
     function cycleMethod(): string { root.cycleMethod(); return root.method }
     function cycleLang(): string { root.lang = root.lang === "ar" ? "en" : "ar"; return root.lang }
     function cycleBarStyle(): string { root.cycleBarStyle(); return root.barStyle }
