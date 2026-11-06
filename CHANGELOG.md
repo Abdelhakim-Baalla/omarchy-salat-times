@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.5.0
+
+- Follow Omarchy's current colors and English font; keep Noto Sans Arabic and Noto Kufi Arabic.
+- Replace the large countdown block with a compact prayer timeline and an explicit tomorrow row after Isha.
+- Split Location, Reminders and prayer calculation settings into focused views; disclose advanced location options on demand.
+- Remove duplicate language controls, repeated past-prayer labels and the redundant city-save action.
+- Fix city-search focus, stale responses after clearing/canceling, hidden-loader gaps and empty searches changing the location.
+- Add native search interaction regression checks and preserve the 249-country, offline-city and calculation coverage.
+- Publish the selected blue-hour mosque cover, fresh bilingual screenshots and clearer setup documentation.
+
 ## 1.4.0
 
 - Replace the ring with a typographic next-prayer layout and remove the unused dial component.
