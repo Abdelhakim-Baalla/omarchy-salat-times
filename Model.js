@@ -558,20 +558,6 @@ function formatCountdownShort(ms) {
   return "<1m"
 }
 
-function progressBetween(start, end, now) {
-  var a = start.getTime()
-  var b = end.getTime()
-  var n = now.getTime()
-  if (!(b > a)) return 0
-  return Math.max(0, Math.min(1, (n - a) / (b - a)))
-}
-
-// Fraction of the civil day [0,1] for dial drawing.
-function dayFraction(date) {
-  if (!date || isNaN(date.getTime())) return 0
-  return (date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds()) / 86400
-}
-
 function findNext(schedule, now) {
   if (!schedule || !schedule.length) return null
   for (var i = 0; i < schedule.length; i++) {
@@ -737,116 +723,6 @@ function dateKey(date) {
   return date.getFullYear() + "-" + pad2(date.getMonth() + 1) + "-" + pad2(date.getDate())
 }
 
-function dialPoints(schedule, now) {
-  var t = now && now.getTime ? now.getTime() : NaN
-  var points = []
-  for (var i = 0; i < schedule.length; i++) {
-    points.push({
-      id: schedule[i].id,
-      fraction: dayFraction(schedule[i].date),
-      isSunrise: schedule[i].id === "sunrise",
-      passed: isFinite(t) && schedule[i].date.getTime() <= t
-    })
-  }
-  return points
-}
-
-// Geometry for the "journey" dial: where we are between the previous
-// marker and the next salah. Fractions are on the 24h circle [0,1].
-function dialJourney(schedule, now) {
-  var empty = {
-    nowFraction: dayFraction(now),
-    fromFraction: 0,
-    nextFraction: 0,
-    nextId: "",
-    prevId: "",
-    remainingRatio: 0,
-    elapsedRatio: 0,
-    hasWindow: false
-  }
-  if (!schedule || !schedule.length) return empty
-
-  var nowMs = now.getTime()
-  var nowFraction = dayFraction(now)
-
-  // Build ordered markers for the day; for "previous" include sunrise.
-  var markers = []
-  for (var i = 0; i < schedule.length; i++) {
-    markers.push({
-      id: schedule[i].id,
-      date: schedule[i].date,
-      fraction: dayFraction(schedule[i].date),
-      isSunrise: schedule[i].id === "sunrise"
-    })
-  }
-
-  var next = null
-  var prev = null
-  for (var j = 0; j < markers.length; j++) {
-    if (markers[j].isSunrise) continue
-    if (markers[j].date.getTime() > nowMs) {
-      next = markers[j]
-      // walk backward for previous non-empty marker (sunrise ok as prev visual)
-      for (var k = j - 1; k >= 0; k--) {
-        prev = markers[k]
-        break
-      }
-      break
-    }
-  }
-
-  // After Isha: previous is isha, next is tomorrow's fajr (use end-of-day + fajr)
-  if (!next) {
-    for (var p = markers.length - 1; p >= 0; p--) {
-      if (!markers[p].isSunrise) { prev = markers[p]; break }
-    }
-    // Aim the remaining arc toward midnight→fajr illusion: nextFraction = fajr + 1
-    var fajr = null
-    for (var f = 0; f < markers.length; f++) {
-      if (markers[f].id === "fajr") { fajr = markers[f]; break }
-    }
-    if (!prev || !fajr) return empty
-    var fromF = prev.fraction
-    var nextF = fajr.fraction + 1
-    var nowF = nowFraction
-    if (nowF < fromF) nowF += 1
-    var span = nextF - fromF
-    if (span <= 0) return empty
-    var elapsed = Math.max(0, Math.min(span, nowF - fromF))
-    return {
-      nowFraction: nowFraction,
-      fromFraction: fromF,
-      nextFraction: fajr.fraction,
-      nextId: "fajr",
-      prevId: prev.id,
-      remainingRatio: 1 - elapsed / span,
-      elapsedRatio: elapsed / span,
-      hasWindow: true,
-      wrapsMidnight: true
-    }
-  }
-
-  var fromFraction = prev ? prev.fraction : 0
-  var nextFraction = next.fraction
-  var span2 = nextFraction - fromFraction
-  if (span2 <= 0) span2 += 1
-  var nowF2 = nowFraction
-  if (nowF2 < fromFraction) nowF2 += 1
-  var elapsed2 = Math.max(0, Math.min(span2, nowF2 - fromFraction))
-
-  return {
-    nowFraction: nowFraction,
-    fromFraction: fromFraction,
-    nextFraction: nextFraction,
-    nextId: next.id,
-    prevId: prev ? prev.id : "",
-    remainingRatio: 1 - elapsed2 / span2,
-    elapsedRatio: elapsed2 / span2,
-    hasWindow: true,
-    wrapsMidnight: false
-  }
-}
-
 // Suggestions are starting points; users can retain their mosque's convention.
 function methodForCountry(code) {
   var methods = { MA: "Morocco", SA: "Makkah", EG: "Egypt", US: "ISNA", CA: "ISNA",
@@ -862,7 +738,7 @@ function countryOptions(countries, lang) {
   var options = [{value: "", label: ar ? "كل البلدان" : "All countries"}]
   for (var i = 0; countries && i < countries.length; i++) {
     var c = countries[i]
-    options.push({value: c.code, label: ar ? c.nameAr : c.name})
+    options.push({value: c.code, label: ar ? (c.nameAr + " · " + c.code) : (c.name + (c.code === "US" ? " · USA" : ""))})
   }
   return options
 }

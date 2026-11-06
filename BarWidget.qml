@@ -84,6 +84,7 @@ BarWidget {
     anchors.fill: parent
     bar: root.bar
     text: root.displayText
+    fontFamily: root.salat && root.salat.lang === "ar" ? "Noto Sans Arabic" : (root.bar ? root.bar.fontFamily : Style.font.family)
     horizontalMargin: 8.75
     verticalPadding: 8.75
     tooltipText: root.tooltipText()

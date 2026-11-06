@@ -87,10 +87,6 @@ Item {
   readonly property string barText: Model.barLabel(barStyle, nextInfo, nowDate, lang)
   readonly property string dayKey: Model.dateKey(nowDate)
 
-  readonly property real dayProgress: Model.dayFraction(nowDate)
-  readonly property var dialPoints: Model.dialPoints(todaySchedule, nowDate)
-  readonly property var dialJourney: Model.dialJourney(todaySchedule, nowDate)
-
   // Imminent: within 15 minutes of next prayer — bar can emphasize.
   readonly property bool imminent: remainingMs > 0 && remainingMs <= 15 * 60 * 1000
   readonly property bool isAdhanWindow: remainingMs > 0 && remainingMs <= 60 * 1000
