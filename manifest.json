@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "id": "abdelhakim.salat",
   "name": "Salat Times",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "author": "abdelhakim",
-  "description": "Prayer times, salah, and adhan for Omarchy: Habous and offline calculation, Hijri date, qibla, Jumu'ah, and Ramadan iftar.",
+  "description": "Worldwide prayer times for Omarchy: salah countdown, adhan reminders, offline coordinates, Hijri adjustment, Qibla and Moroccan Habous tables.",
   "kinds": [
     "service",
     "bar-widget"
@@ -16,7 +16,7 @@
   },
   "barWidget": {
     "displayName": "Salat Times",
-    "description": "Next salah countdown inside a day ring, with qibla and the full prayer timetable",
+    "description": "Next prayer countdown, daily timetable, worldwide city search, Hijri calendar and Qibla",
     "category": "Time",
     "allowMultiple": false,
     "defaultSection": "center"
