@@ -33,7 +33,10 @@ Item {
   property int notifyLeadMinutes: 10
   property int offsetMinutes: 0
   property int hijriAdjustment: 0
-  property string refreshError: ""
+  property bool refreshFailed: false
+  readonly property string refreshError: !refreshFailed ? "" : (lang === "ar"
+    ? "تعذر التحديث؛ تُعرض المواقيت المتاحة"
+    : "Update unavailable; showing available times")
   property string desktopTimezone: ""
   property bool notifyAtAdhan: true
   property bool notifyLead: true
@@ -169,7 +172,7 @@ Item {
     todaySchedule = todaySched || []
     tomorrowSchedule = tomorrowSched || []
     source = src || "offline"
-    if (source !== "offline") refreshError = ""
+    if (source !== "offline") refreshFailed = false
     var today = new Date(_now)
     nextInfo = Model.nextAfterSchedule(todaySchedule, tomorrowSchedule, today)
     rows = Model.enrichSchedule(todaySchedule, today, lang)
@@ -196,7 +199,7 @@ Item {
     tomorrowFetch.running = false
     fetching = false
     _pendingToday = []
-    refreshError = ""
+    refreshFailed = false
     recomputeOffline()
     refreshTimer.restart()
   }
@@ -289,7 +292,7 @@ Item {
           tomorrowFetch.running = true
         } else {
           root.fetching = false
-          root.refreshError = root.lang === "ar" ? "تعذر التحديث؛ الحساب المحلي مستخدم" : "Online update unavailable; using calculation"
+          root.refreshFailed = true
           if (!root.todaySchedule.length) root.recomputeOffline()
         }
       }
