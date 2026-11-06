@@ -27,6 +27,9 @@ Item {
   property string barStyle: "full"
   property int notifyLeadMinutes: 10
   property int offsetMinutes: 0
+  property int hijriAdjustment: 0
+  property string refreshError: ""
+  property string desktopTimezone: ""
   property bool notifyAtAdhan: true
   property bool notifyLead: true
   property bool useWeatherLocation: true
@@ -39,6 +42,7 @@ Item {
   property real longitude: -9.59815
   property string source: "offline"   // "habous" | "aladhan" | "offline"
   property bool fetching: false
+  property int requestGeneration: 0
   property var habousCities: []
   readonly property var habousCityOptions: {
     var out = []
@@ -69,11 +73,11 @@ Item {
   readonly property string nextGlyph: nextPrayer ? Model.prayerGlyph(nextPrayer.id) : Model.prayerGlyph("salat")
   readonly property string nextTime: nextPrayer ? Model.formatClock(nextPrayer.date, true) : "--:--"
 
-  readonly property string hijriLabel: Model.formatHijri(nowDate, lang)
+  readonly property string hijriLabel: Model.formatHijri(nowDate, lang, hijriAdjustment)
   readonly property string gregorianLabel: Qt.formatDate(nowDate, "dddd d MMMM yyyy")
   readonly property string locationLabel: locationName !== "" ? locationName : (latitude.toFixed(2) + ", " + longitude.toFixed(2))
   readonly property string qiblaLabel: Model.qiblaLabel(latitude, longitude, lang)
-  readonly property string fastingHint: Model.fastingHint(nowDate, todaySchedule, lang)
+  readonly property string fastingHint: Model.fastingHint(nowDate, todaySchedule, lang, hijriAdjustment)
   readonly property string methodLabel: Model.methodLabel(method)
   readonly property string barText: Model.barLabel(barStyle, nextInfo, nowDate, lang)
   readonly property string dayKey: Model.dateKey(nowDate)
@@ -110,6 +114,7 @@ Item {
       latitude = Number(weatherLocation.latitude)
       longitude = Number(weatherLocation.longitude)
       if (weatherLocation.name) locationName = weatherLocation.name
+      if (habousCities.length && !Model.findHabousCity(habousCities, weatherLocation.name)) useHabous = false
     }
     resolveHabousCity()
   }
@@ -133,6 +138,11 @@ Item {
         locationName = habousCities[i].name
         useWeatherLocation = false
         useHabous = true
+        if (onlineEnabled) {
+          cityCoordinateFetch.running = false
+          cityCoordinateFetch.cityName = habousCityName
+          cityCoordinateFetch.running = true
+        }
         recompute()
         scheduleSave()
         return
@@ -156,6 +166,7 @@ Item {
     todaySchedule = todaySched || []
     tomorrowSchedule = tomorrowSched || []
     source = src || "offline"
+    if (source !== "offline") refreshError = ""
     var today = new Date(_now)
     nextInfo = Model.nextAfterSchedule(todaySchedule, tomorrowSchedule, today)
     rows = Model.enrichSchedule(todaySchedule, today, lang)
@@ -173,14 +184,31 @@ Item {
   }
 
   function recompute() {
-    if (!todaySchedule.length) recomputeOffline()
-    fetchOnline()
+    if (!loaded) return
+    // Ignore collector/exit callbacks from canceled requests.
+    requestGeneration += 1
+    // Cancel obsolete requests before changing location/method/date.
+    habousFetch.running = false
+    todayFetch.running = false
+    tomorrowFetch.running = false
+    fetching = false
+    _pendingToday = []
+    refreshError = ""
+    recomputeOffline()
+    refreshTimer.restart()
+  }
+
+  Timer {
+    id: refreshTimer
+    interval: 180
+    onTriggered: root.fetchOnline()
   }
 
   function fetchOnline() {
     if (!onlineEnabled || fetching) return
     fetching = true
     if (useHabous) {
+      habousFetch.generation = requestGeneration
       habousFetch.fellBack = false
       habousFetch.command = [
         "curl", "-fsS", "--max-time", "12", "--max-filesize", "1048576", "-A", "Mozilla/5.0",
@@ -195,25 +223,27 @@ Item {
   function fetchAladhan() {
     if (!onlineEnabled) { fetching = false; recomputeOffline(); return }
     var now = new Date(_now)
+    todayFetch.generation = requestGeneration
     todayFetch.command = [
       "curl", "-fsS", "--max-time", "8", "--max-filesize", "262144",
-      Model.aladhanUrl(latitude, longitude, method, madhab, offsetMinutes, now)
+      Model.aladhanUrl(latitude, longitude, method, madhab, offsetMinutes, now, desktopTimezone)
     ]
     todayFetch.running = true
   }
 
   Process {
     id: habousFetch
+    property int generation: -1
     property bool fellBack: false
     function fallBack() {
-      if (fellBack || !root.onlineEnabled) return
+      if (fellBack || !root.onlineEnabled || generation !== root.requestGeneration) return
       fellBack = true
       root.fetchAladhan()
     }
     command: ["true"]
     stdout: StdioCollector {
       onStreamFinished: {
-        if (!root.onlineEnabled) return
+        if (!root.onlineEnabled || habousFetch.generation !== root.requestGeneration) return
         var today = new Date(root._now)
         var parsed = Model.schedulesFromHabous(text, today, root.offsetMinutes)
         if (parsed && parsed.today && parsed.today.length) {
@@ -231,34 +261,39 @@ Item {
       }
     }
     onExited: function(code) {
+      if (habousFetch.generation !== root.requestGeneration) return
       if (code !== 0) habousFetch.fallBack()
     }
   }
 
   Process {
     id: todayFetch
+    property int generation: -1
     command: ["true"]
     stdout: StdioCollector {
       onStreamFinished: {
-        if (!root.onlineEnabled) return
+        if (!root.onlineEnabled || todayFetch.generation !== root.requestGeneration) return
         var today = new Date(root._now)
         var sched = Model.scheduleFromAladhan(text, today)
         if (sched) {
           root._pendingToday = sched
           var tom = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)
+          tomorrowFetch.generation = root.requestGeneration
           tomorrowFetch.command = [
             "curl", "-fsS", "--max-time", "8", "--max-filesize", "262144",
-            Model.aladhanUrl(root.latitude, root.longitude, root.method, root.madhab, root.offsetMinutes, tom)
+            Model.aladhanUrl(root.latitude, root.longitude, root.method, root.madhab, root.offsetMinutes, tom, root.desktopTimezone)
           ]
           tomorrowFetch.running = true
         } else {
           root.fetching = false
+          root.refreshError = root.lang === "ar" ? "تعذر التحديث؛ الحساب المحلي مستخدم" : "Online update unavailable; using calculation"
           if (!root.todaySchedule.length) root.recomputeOffline()
         }
       }
     }
     onExited: function(code) {
-      if (!root.onlineEnabled) return
+      if (todayFetch.generation !== root.requestGeneration) return
+      if (!root.onlineEnabled || todayFetch.generation !== root.requestGeneration) return
       if (code !== 0) {
         root.fetching = false
         if (!root.todaySchedule.length) root.recomputeOffline()
@@ -270,10 +305,11 @@ Item {
 
   Process {
     id: tomorrowFetch
+    property int generation: -1
     command: ["true"]
     stdout: StdioCollector {
       onStreamFinished: {
-        if (!root.onlineEnabled) return
+        if (!root.onlineEnabled || tomorrowFetch.generation !== root.requestGeneration) return
         var today = new Date(root._now)
         var tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)
         var tom = Model.scheduleFromAladhan(text, tomorrow)
@@ -292,7 +328,8 @@ Item {
       }
     }
     onExited: function(code) {
-      if (!root.onlineEnabled) return
+      if (tomorrowFetch.generation !== root.requestGeneration) return
+      if (!root.onlineEnabled || tomorrowFetch.generation !== root.requestGeneration) return
       if (code !== 0) {
         root.fetching = false
         if (root._pendingToday && root._pendingToday.length) {
@@ -329,6 +366,28 @@ Item {
     onLoadFailed: root.habousCities = []
   }
 
+  // Explicit city selection also updates the offline fallback and Qibla.
+  Process {
+    id: cityCoordinateFetch
+    property string cityName: ""
+    command: ["curl", "-fsS", "--max-time", "6", "--max-filesize", "262144",
+      "https://geocoding-api.open-meteo.com/v1/search?count=5&language=en&countryCode=MA&name=" + encodeURIComponent(cityName)]
+    stdout: StdioCollector {
+      onStreamFinished: {
+        if (!root.useHabous || root.habousCityName !== cityCoordinateFetch.cityName) return
+        var results = Model.parseGeocodingResults(text)
+        for (var i = 0; i < results.length; i++) {
+          if (Model.normalizeCityKey(results[i].name) !== Model.normalizeCityKey(cityCoordinateFetch.cityName)) continue
+          root.latitude = results[i].latitude
+          root.longitude = results[i].longitude
+          root.recompute()
+          root.scheduleSave()
+          return
+        }
+      }
+    }
+  }
+
   function setMethod(id) {
     method = Model.validMethod(id)
   }
@@ -361,7 +420,9 @@ Item {
     method = ids[(i + 1) % ids.length]
   }
 
-  function setLocation(name, lat, lng) {
+  function setLocation(name, lat, lng, countryCode) {
+    if (!isFinite(Number(lat)) || !isFinite(Number(lng)) || Math.abs(Number(lat)) > 90 || Math.abs(Number(lng)) > 180) return
+    useHabous = countryCode === "MA" && Model.findHabousCity(habousCities, name) !== null
     useWeatherLocation = false
     locationName = String(name || "")
     latitude = Model.clampNumber(lat, latitude, -90, 90)
@@ -486,6 +547,7 @@ Item {
     if (loaded) return
     var data = {}
     try { data = JSON.parse(raw || "{}") } catch (e) { data = {} }
+    hijriAdjustment = Model.clampInt(data.hijriAdjustment, 0, -2, 2)
     method = Model.validMethod(data.method || "Morocco")
     madhab = Model.validMadhab(data.madhab || "Standard")
     lang = data.lang === "en" ? "en" : "ar"
@@ -515,7 +577,8 @@ Item {
 
   function flush() {
     stateFile.setText(JSON.stringify({
-      version: 1,
+      version: 2,
+      hijriAdjustment: hijriAdjustment,
       method: method,
       madhab: madhab,
       lang: lang,
@@ -539,14 +602,17 @@ Item {
 
   onOnlineEnabledChanged: {
     if (!loaded) return
+    requestGeneration += 1
     habousFetch.running = false
     todayFetch.running = false
     tomorrowFetch.running = false
+    cityCoordinateFetch.running = false
     fetching = false
     if (onlineEnabled) recompute()
     else recomputeOffline()
     scheduleSave()
   }
+  onHijriAdjustmentChanged: scheduleSave()
   onMethodChanged: { if (loaded) { recompute(); scheduleSave() } }
   onMadhabChanged: { if (loaded) { recompute(); scheduleSave() } }
   onLangChanged: {
@@ -566,11 +632,23 @@ Item {
   onLocationNameChanged: scheduleSave()
 
   Process {
+    id: timezoneProc
+    command: ["timedatectl", "show", "--property=Timezone", "--value"]
+    stdout: StdioCollector {
+      onStreamFinished: {
+        var zone = text.trim()
+        if (/^[A-Za-z_+\/-]+$/.test(zone)) { root.desktopTimezone = zone; root.recompute() }
+      }
+    }
+  }
+
+  Process {
     id: ensureDirProc
     command: ["mkdir", "-p", root.home + "/.local/state/omarchy"]
   }
 
   Component.onCompleted: {
+    timezoneProc.running = true
     ensureDirProc.running = true
     Qt.callLater(function() {
       weatherFile.reload()
@@ -592,7 +670,14 @@ Item {
         root.recomputeOffline()
       }
       // Midnight rollover: refetch once the day key flips
-      if (root._lastDayKey && root._lastDayKey !== root.dayKey) root.fetchOnline()
+      if (root._lastDayKey && root._lastDayKey !== root.dayKey) {
+        var kept = {}
+        for (var key in root.notifiedKeys)
+          if (key.indexOf(root.dayKey + ":") === 0) kept[key] = root.notifiedKeys[key]
+        root.notifiedKeys = kept
+        root.recompute()
+        root.scheduleSave()
+      }
       root._lastDayKey = root.dayKey
     }
   }
