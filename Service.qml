@@ -408,7 +408,7 @@ Item {
     var countryName = ""
     for (var i = 0; i < countries.length; i++)
       if (countries[i].code === city.countryCode) countryName = lang === "ar" ? countries[i].nameAr : countries[i].name
-    setLocation(city.name + (countryName ? ", " + countryName : ""), city.latitude, city.longitude, city.countryCode)
+    setLocation((lang === "ar" && city.nameAr ? city.nameAr : city.name) + (countryName ? ", " + countryName : ""), city.latitude, city.longitude, city.countryCode)
   }
 
   function setMethod(id) {

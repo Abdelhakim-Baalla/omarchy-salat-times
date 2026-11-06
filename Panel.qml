@@ -555,6 +555,8 @@ Ui.Panel {
             }
             SearchableDropdown {
               id: countryDropdown
+              background: root.panelBackground
+              popupBorder: root.accent
               width: parent.width
               label: root.arabic ? "البلد" : "Country"
               placeholderText: root.arabic ? "السعودية، مصر، أمريكا…" : "Saudi Arabia, Egypt, USA…"
@@ -570,10 +572,13 @@ Ui.Panel {
             }
             SearchableDropdown {
               id: cityPresetDropdown
+              popupMinHeight: Style.space(96)
+              background: root.panelBackground
+              popupBorder: root.accent
               width: parent.width
               label: root.arabic ? "مدن جاهزة · تعمل دون إنترنت" : "Quick cities · available offline"
               placeholderText: root.arabic ? "اختر مدينة أو ابحث أدناه" : "Choose a city or search below"
-              options: Model.cityPresetOptions(root.salat ? root.salat.cityPresets : [], root.countryFilter)
+              options: Model.cityPresetOptions(root.salat ? root.salat.cityPresets : [], root.countryFilter, root.arabic ? "ar" : "en")
               value: ""
               foreground: root.contentForeground
               accent: root.accent
@@ -744,6 +749,8 @@ Ui.Panel {
 
             SearchableDropdown {
               id: habousCityDropdown
+              background: root.panelBackground
+              popupBorder: root.accent
               width: parent.width
               visible: (!root.countryFilter || root.countryFilter === "MA") && (root.salat ? root.salat.useHabous : true)
               label: root.arabic ? "مدينة حبوس" : "Habous city"
@@ -899,6 +906,8 @@ Ui.Panel {
 
             Dropdown {
               id: methodDropdown
+              background: root.panelBackground
+              popupBorder: root.accent
               width: parent.width
               label: root.arabic ? "الطريقة" : "Method"
               value: root.salat ? root.salat.method : "Morocco"

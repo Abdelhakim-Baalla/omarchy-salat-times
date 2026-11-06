@@ -743,11 +743,11 @@ function countryOptions(countries, lang) {
   return options
 }
 
-function cityPresetOptions(cities, code) {
+function cityPresetOptions(cities, code, lang) {
   var options = []
   for (var i = 0; cities && i < cities.length; i++) {
     if (!code || cities[i].countryCode === code)
-      options.push({value: String(i), label: cities[i].name + " · " + cities[i].countryCode})
+      options.push({value: String(i), label: (validLang(lang) === "ar" && cities[i].nameAr ? cities[i].nameAr : cities[i].name) + " · " + cities[i].countryCode})
   }
   return options
 }

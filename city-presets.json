@@ -4,160 +4,183 @@
     "countryCode": "SA",
     "latitude": 24.68773,
     "longitude": 46.72185,
-    "timezone": "Asia/Riyadh"
+    "timezone": "Asia/Riyadh",
+    "nameAr": "الرياض"
   },
   {
     "name": "Mecca",
     "countryCode": "SA",
     "latitude": 21.42664,
     "longitude": 39.82563,
-    "timezone": "Asia/Riyadh"
+    "timezone": "Asia/Riyadh",
+    "nameAr": "مكة المكرمة"
   },
   {
     "name": "Medina",
     "countryCode": "SA",
     "latitude": 24.46861,
     "longitude": 39.61417,
-    "timezone": "Asia/Riyadh"
+    "timezone": "Asia/Riyadh",
+    "nameAr": "المدينة المنورة"
   },
   {
     "name": "Cairo",
     "countryCode": "EG",
     "latitude": 30.06263,
     "longitude": 31.24967,
-    "timezone": "Africa/Cairo"
+    "timezone": "Africa/Cairo",
+    "nameAr": "القاهرة"
   },
   {
     "name": "Alexandria",
     "countryCode": "EG",
     "latitude": 31.20176,
     "longitude": 29.91582,
-    "timezone": "Africa/Cairo"
+    "timezone": "Africa/Cairo",
+    "nameAr": "الإسكندرية"
   },
   {
     "name": "New York",
     "countryCode": "US",
     "latitude": 40.71427,
     "longitude": -74.00597,
-    "timezone": "America/New_York"
+    "timezone": "America/New_York",
+    "nameAr": "نيويورك"
   },
   {
     "name": "Chicago",
     "countryCode": "US",
     "latitude": 41.85003,
     "longitude": -87.65005,
-    "timezone": "America/Chicago"
+    "timezone": "America/Chicago",
+    "nameAr": "شيكاغو"
   },
   {
     "name": "Los Angeles",
     "countryCode": "US",
     "latitude": 34.05223,
     "longitude": -118.24368,
-    "timezone": "America/Los_Angeles"
+    "timezone": "America/Los_Angeles",
+    "nameAr": "لوس أنجلوس"
   },
   {
     "name": "London",
     "countryCode": "GB",
     "latitude": 51.50853,
     "longitude": -0.12574,
-    "timezone": "Europe/London"
+    "timezone": "Europe/London",
+    "nameAr": "لندن"
   },
   {
     "name": "Toronto",
     "countryCode": "CA",
     "latitude": 43.70643,
     "longitude": -79.39864,
-    "timezone": "America/Toronto"
+    "timezone": "America/Toronto",
+    "nameAr": "تورونتو"
   },
   {
     "name": "Paris",
     "countryCode": "FR",
     "latitude": 48.85341,
     "longitude": 2.3488,
-    "timezone": "Europe/Paris"
+    "timezone": "Europe/Paris",
+    "nameAr": "باريس"
   },
   {
     "name": "Berlin",
     "countryCode": "DE",
     "latitude": 52.52437,
     "longitude": 13.41053,
-    "timezone": "Europe/Berlin"
+    "timezone": "Europe/Berlin",
+    "nameAr": "برلين"
   },
   {
     "name": "Istanbul",
     "countryCode": "TR",
     "latitude": 41.01384,
     "longitude": 28.94966,
-    "timezone": "Europe/Istanbul"
+    "timezone": "Europe/Istanbul",
+    "nameAr": "إسطنبول"
   },
   {
     "name": "Karachi",
     "countryCode": "PK",
     "latitude": 24.8608,
     "longitude": 67.0104,
-    "timezone": "Asia/Karachi"
+    "timezone": "Asia/Karachi",
+    "nameAr": "كراتشي"
   },
   {
     "name": "Dubai",
     "countryCode": "AE",
     "latitude": 25.07725,
     "longitude": 55.30927,
-    "timezone": "Asia/Dubai"
+    "timezone": "Asia/Dubai",
+    "nameAr": "دبي"
   },
   {
     "name": "Doha",
     "countryCode": "QA",
     "latitude": 25.28545,
     "longitude": 51.53096,
-    "timezone": "Asia/Qatar"
+    "timezone": "Asia/Qatar",
+    "nameAr": "الدوحة"
   },
   {
     "name": "Kuwait City",
     "countryCode": "KW",
     "latitude": 29.367,
     "longitude": 47.97429,
-    "timezone": "Asia/Kuwait"
+    "timezone": "Asia/Kuwait",
+    "nameAr": "مدينة الكويت"
   },
   {
     "name": "Kuala Lumpur",
     "countryCode": "MY",
     "latitude": 3.1412,
     "longitude": 101.68653,
-    "timezone": "Asia/Kuala_Lumpur"
+    "timezone": "Asia/Kuala_Lumpur",
+    "nameAr": "كوالالمبور"
   },
   {
     "name": "Jakarta",
     "countryCode": "ID",
     "latitude": -6.21462,
     "longitude": 106.84513,
-    "timezone": "Asia/Jakarta"
+    "timezone": "Asia/Jakarta",
+    "nameAr": "جاكرتا"
   },
   {
     "name": "Sydney",
     "countryCode": "AU",
     "latitude": -33.86785,
     "longitude": 151.20732,
-    "timezone": "Australia/Sydney"
+    "timezone": "Australia/Sydney",
+    "nameAr": "سيدني"
   },
   {
     "name": "New Delhi",
     "countryCode": "IN",
     "latitude": 28.62137,
     "longitude": 77.2148,
-    "timezone": "Asia/Kolkata"
+    "timezone": "Asia/Kolkata",
+    "nameAr": "نيودلهي"
   },
   {
     "name": "Dhaka",
     "countryCode": "BD",
     "latitude": 23.7104,
     "longitude": 90.40744,
-    "timezone": "Asia/Dhaka"
+    "timezone": "Asia/Dhaka",
+    "nameAr": "دكا"
   },
   {
     "name": "Agadir",
     "countryCode": "MA",
     "latitude": 30.42018,
     "longitude": -9.59815,
-    "timezone": "Africa/Casablanca"
+    "timezone": "Africa/Casablanca",
+    "nameAr": "أكادير"
   }
 ]
