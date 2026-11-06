@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.4.0
+
+- Replace the ring with a typographic next-prayer layout and remove the unused dial component.
+- Add Noor emerald, ivory and gold appearance, plus an optional System colors mode.
+- Use Noto Sans Arabic for Arabic body text, Noto Kufi Arabic headings and Noto Sans numerals; localize the Gregorian date.
+- Add a searchable English/Arabic list of 249 countries and territories, filtered city search and 23 offline city presets.
+- Suggest regional methods for Saudi Arabia, Egypt, USA/Canada and other supported conventions, with manual override.
+- Expand offline/API methods for Gulf, Kuwait, Qatar, Singapore, France, Turkey, Russia, Dubai, Malaysia and Indonesia.
+- Keep Morocco-only controls contextual; add direct country-to-city selection IPC.
+- Replace the marketplace cover with the Noor architectural campaign artwork.
+
 ## 1.3.0
 
 - Redesigned next-prayer surface with a prominent countdown, compact day dial, and taller timetable rows.

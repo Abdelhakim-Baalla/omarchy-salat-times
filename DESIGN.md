@@ -1,138 +1,140 @@
 ---
-name: Salat Times
-description: Theme-following native prayer timetable for Omarchy
+name: Salat Times · Noor
+description: A native prayer window in emerald, ivory and gold
 colors:
-  foreground: "bar ? bar.foreground : Color.foreground"
-  accent: "Color.accent"
-  muted: "Qt.rgba(root.contentForeground.r, root.contentForeground.g, root.contentForeground.b, 0.76)"
-  hero-surface: "Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.09)"
-  next-surface: "Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.12)"
+  background: 'root.noor ? "#102D27" : Color.popups.background'
+  foreground: 'root.noor ? "#F5EFDF" : (bar ? bar.foreground : Color.foreground)'
+  accent: 'root.noor ? "#E3C68C" : Color.accent'
+  muted: 'Qt.rgba(root.contentForeground.r, root.contentForeground.g, root.contentForeground.b, 0.76)'
+  hairline: 'Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.45)'
+  next-surface: 'Qt.rgba(root.accent.r, root.accent.g, root.accent.b, root.salat && root.salat.imminent ? 0.22 : 0.12)'
 typography:
   display:
-    fontFamily: "bar ? bar.fontFamily : Style.font.family"
-    fontSize: "Style.space(38)"
-    fontWeight: "Font.DemiBold"
+    fontFamily: '"Noto Sans"'
+    fontSize: 'Style.space(62)'
+    fontWeight: 'Font.Light'
   prayer-name:
-    fontFamily: "bar ? bar.fontFamily : Style.font.family"
-    fontSize: "Style.space(24)"
-    fontWeight: "Font.Bold"
+    fontFamily: 'root.arabic ? "Noto Kufi Arabic" : "Noto Sans"'
+    fontSize: 'Style.space(30)'
+    fontWeight: 'Font.DemiBold'
+  prayer-start:
+    fontFamily: '"Noto Sans"'
+    fontSize: 'Style.space(22)'
   heading:
-    fontFamily: "bar ? bar.fontFamily : Style.font.family"
-    fontSize: "Style.font.heading"
-    fontWeight: "Font.Bold"
+    fontFamily: 'root.arabic ? "Noto Kufi Arabic" : "Noto Sans"'
+    fontSize: 'Style.space(23)'
+    fontWeight: 'Font.Bold'
   body:
-    fontFamily: "bar ? bar.fontFamily : Style.font.family"
-    fontSize: "arabic ? Math.max(Style.font.body, Style.space(14)) : Style.font.body"
+    fontFamily: 'root.arabic ? "Noto Sans Arabic" : "Noto Sans"'
+    fontSize: 'root.arabic ? Math.max(Style.font.body, Style.space(15)) : Style.font.body'
   body-small:
-    fontFamily: "bar ? bar.fontFamily : Style.font.family"
-    fontSize: "arabic ? Math.max(Style.font.bodySmall, Style.space(12)) : Style.font.bodySmall"
-  caption:
-    fontFamily: "bar ? bar.fontFamily : Style.font.family"
-    fontSize: "Style.font.caption"
+    fontFamily: 'root.arabic ? "Noto Sans Arabic" : "Noto Sans"'
+    fontSize: 'root.arabic ? Math.max(Style.font.bodySmall, Style.space(12)) : Style.font.bodySmall'
+  countdown-caption:
+    fontFamily: 'root.arabic ? "Noto Sans Arabic" : "Noto Sans"'
+    fontSize: 'Style.space(13)'
 rounded:
-  row: "Style.cornerRadius"
+  row: 'Style.cornerRadius'
 spacing:
-  tight: "Style.space(2)"
-  inline: "Style.space(4)"
-  control: "Style.space(6)"
-  group: "Style.space(8)"
-  row: "Style.space(10)"
-  section: "Style.space(12)"
-  stack: "Style.space(14)"
-  inset: "Style.space(16)"
+  tight: 'Style.space(2)'
+  inline: 'Style.space(4)'
+  control: 'Style.space(6)'
+  group: 'Style.space(8)'
+  row: 'Style.space(10)'
+  section: 'Style.space(12)'
+  stack: 'Style.space(14)'
 components:
-  next-prayer-surface:
-    backgroundColor: "{colors.hero-surface}"
-    rounded: "{rounded.row}"
-    height: "Style.space(154)"
-    padding: "Style.space(16)"
   prayer-row:
-    textColor: "{colors.foreground}"
-    rounded: "{rounded.row}"
-    height: "Style.space(44)"
-    padding: "0 Style.space(12)"
+    textColor: '{colors.foreground}'
+    rounded: '{rounded.row}'
+    height: 'Style.space(40)'
+    padding: '0 Style.space(12)'
   prayer-row-next:
-    backgroundColor: "{colors.next-surface}"
-    textColor: "{colors.accent}"
-    rounded: "{rounded.row}"
-    height: "Style.space(44)"
-    padding: "0 Style.space(12)"
-  day-dial:
-    size: "Style.space(104)"
-  stepper-value:
-    width: "Style.space(36)"
-    height: "Style.space(22)"
+    backgroundColor: '{colors.next-surface}'
+    textColor: '{colors.accent}'
+    rounded: '{rounded.row}'
+    height: 'Style.space(50)'
+    padding: '0 Style.space(12)'
 ---
 
 # Design System: Salat Times
 
 ## Overview
 
-**Creative North Star: "The daily prayer instrument"**
+**Creative North Star: "A moment of light"**
 
-A compact native prayer timetable that belongs to the current Omarchy desktop. The next prayer and explicit time remaining lead inside a tonal rectangle; a small adjacent day ring provides context. Its arc represents the current prayer window. The theme supplies the font, foreground, surface, and accent.
+Noor expresses the prayer window through generous numerals, intentional Arabic typography and a clear timetable. Deep emerald grounds warm ivory text; brass gold identifies the next prayer and its start. The centered light countdown is the primary answer, with a short caption explaining its meaning.
+
+The implementation is native Qt Quick / Quickshell on Omarchy. Noor is the persisted default appearance; System colors are an explicit alternative. Campaign direction uses a sculptural mihrab and sunlight, separate from the working interface. The user rejected the former ring and generic screenshot-on-mosque cover.
 
 **Key Characteristics:**
 
-- Theme-bound native typography and color
-- Aligned times with explicit next-prayer emphasis
-- Flat tonal surfaces and restrained motion
-
-These tokens are native QML expressions, evaluated by Omarchy/Quickshell. They are intentionally not CSS literals. `Style.space` and `Style.duration` retain desktop scale and motion preferences; their arguments are base logical units, not resolved device pixels. `PRODUCT.md` records the approved direction; `.impeccable/salat-surface.md` records the surface composition.
+- Typographic hierarchy with distinct Arabic heading and body families
+- Emerald, ivory and gold by default; optional live System colors
+- Clear aligned timetable with a taller next-prayer row
+- Flat native surfaces and restrained motion
 
 ## Colors
 
 ### Primary
 
-The live accent marks the next prayer name, next row, elapsed day arc, and next dial point. The next-prayer surface uses a quiet accent wash; the timetable’s next row uses a stronger wash that intensifies when prayer is imminent.
+**Brass gold** marks the next prayer, exact start, divider and next timetable row. The selected row uses a translucent wash that intensifies when prayer is imminent.
 
 ### Neutral
 
-Foreground follows the hosting bar with the Commons fallback. Muted foreground identifies dates, source, secondary labels, and helper copy. The panel surface and shared-control states belong to `qs.Ui`; retain their theme bindings rather than extracting a snapshot palette.
+**Deep emerald** is the default panel ground; **warm ivory** is the reading foreground. Muted foreground carries secondary dates, source, helper copy and passed prayers. Country and quick-city popups explicitly bind their background to the panel and their border to the accent.
 
-**The Theme Rule.** Preserve dynamic theme expressions; a screenshot’s colors are evidence of one theme, not a new palette.
+**The Appearance Rule.** Preserve the Noor/System conditional bindings. Noor is an authored palette; System mode evaluates the current Omarchy colors instead of a screenshot palette.
 
 ## Typography
 
-Use the hosting bar’s font family with `Style.font.family` as fallback. The countdown uses the display role, horizontally fits, and may shrink to `Style.space(22)`. The prayer name, heading, current and next timetable rows, and dial time are bold. The explicit “Time remaining” caption explains the countdown; exact start time sits beneath it. Standard body weights remain native defaults. Arabic body and small text have the documented minimum sizes; captions retain `Style.font.caption`.
+Arabic headings use Noto Kufi Arabic and body labels use Noto Sans Arabic. English uses Noto Sans; countdown, exact start and timetable numerals always use Noto Sans. The bar uses Noto Sans Arabic in Arabic and the host bar family in English.
 
-`PlainLabel` explicitly uses `Text.PlainText` and disables mirroring. Apply reading alignment to language-bearing labels; preserve unmirrored countdown, dial time, and right-aligned timetable numerals. No custom line height, tracking, or tabular-number feature is defined.
+The display countdown is light and centered, with horizontal fit down to `Style.space(34)`. The next-prayer name is demibold; the panel title is bold. The caption reads “Until the next prayer” with a tomorrow qualifier when applicable. Current and next timetable names and times are bold; other rows retain native default weights. Arabic body and small-text minimum sizes are recorded in frontmatter. Native caption and smaller helper styles continue to use `Style.font.caption` and `Style.font.bodySmall` where implemented.
+
+**The Numeric Rule.** Keep schedule numerals right-aligned and unmirrored; apply reading alignment to language-bearing labels. Do not substitute a decorative clock face for the countdown.
 
 ## Layout
 
-`KeyboardPanel` fits a preferred content width of `Style.space(400)` and fits height to the available screen. The column uses stack spacing; overview uses the same rhythm. Header and settings sections use section spacing. Vertical scrolling appears only when content overflows; horizontal scrolling is disabled.
+`KeyboardPanel` prefers `Style.space(400)` content width and fits height to the available screen. Vertical scrolling appears on overflow; horizontal scrolling is disabled. `Style.space` arguments are logical base units, not fixed physical pixels or web breakpoints.
 
-The next-prayer surface is a `Style.space(154)` high rounded rectangle. A row with inset spacing places the prayer name, countdown, “Time remaining” caption, and exact start beside a `Style.space(104)` day dial. The hero row deliberately disables mirroring; the dial center shows the exact start. Schedule rows use tight spacing, horizontal section padding, row gaps, a `Style.space(64)` state column, and a fixed `Style.space(56)` time column. Names elide before times. Qibla sits with the date. A Ramadan suhoor or iftar line appears only in that month. A full-width refresh action follows the timetable and any refresh error; its label reports fetching and it is disabled offline or while fetching. Settings replace the overview and retain the header and settings action. Settings use worldwide city search with searching, no-match and connection feedback; a Hijri calendar stepper permits ±2 days. Persistent latitude and longitude labels sit over equal-width unmirrored fields, followed by a validated Apply coordinates action that works offline and a desktop-timezone note.
+The first view stacks title/language, Hijri and Gregorian dates, Qibla and location, then the typographic prayer window. A one-unit gold hairline precedes a name/start row. The centered countdown and explanatory caption follow, then today’s six timetable entries, source, refresh and settings actions. The hero has no card fill, dial or ring. Schedule names elide before the fixed `Style.space(64)` state and `Style.space(56)` time columns.
+
+Settings replace the overview while retaining title and settings action. Worldwide setup leads with country and offline quick-city selectors, followed by method suggestions and manual search. Morocco controls appear only when the country filter is empty or MA. Lower sections retain Hijri adjustment, coordinates, calculation and reminders.
 
 ## Elevation & Depth
 
-Local content is flat and tone-separated. No local shadow or glow is defined. Panel framing, elevation, native focus, hover, and selected-control treatment are inherited from `qs.Ui`, not recreated here.
+Local content is flat. The hairline and translucent next-row fill organize information without local shadows or glow. Native panel framing, focus, hover and control states belong to `qs.Ui`. The background rectangle extends across the panel padding. Country and city dropdown popups carry matching surface and accent border bindings.
 
 ## Shapes
 
-Timetable highlights follow `Style.cornerRadius`. The day dial is a true circle: radius is half its smaller dimension minus `Style.space(10)`; stroke is `Style.space(3)`. Its neutral track uses foreground alpha 0.14. Normal points use alpha 0.8, sunrise 0.5; next and ordinary point radii are `Style.space(4.5)` and `Style.space(2.5)`, with a `Style.space(3)` current-position point.
+Timetable highlights follow `Style.cornerRadius`; ordinary rows are compact and the next row is taller. The prayer window is an open typographic composition separated by a straight hairline. There is no circular visual component.
 
 ## Components
 
-- **Prayer rows:** six aligned timetable entries; current and next use bold name/time; next additionally uses accent and tonal fill. A fixed state column shows the model’s localized status label. Passed rows use muted text. The next fill changes from alpha 0.12 to 0.22 when imminent. The source label remains visible beside the schedule heading.
-- **Next-prayer surface:** flat accent wash, native rounded corners, large countdown with horizontal fit and explicit caption. It carries the primary answer without waiting for motion.
-- **DayDial:** actual 24-hour positions, clockwise from midnight at the top. Center shows the next start time; elapsed arc follows the current prayer window. Repaint only on data, size, or theme changes; no animation timer.
-- **Native controls:** language and settings use `Ui.Button`; settings reuse `Toggle`, `SearchableDropdown`, `Dropdown`, `ButtonGroup`, `TextField`, and `PanelSectionHeader` from `qs.Ui`. Preserve shared interaction styling and focus behavior. Opening settings focuses its first toggle; closing restores panel keyboard focus.
-- **StepperRow:** two focusable `PanelActionButton` controls surround a centered bold body-size value; inline spacing. Positive correction displays an explicit plus sign.
-- **BarWidget:** shared `WidgetButton`, horizontal margin and vertical padding both 8.75. Imminent prayer sets its native active state. Left click opens the panel, right cycles style, middle switches language.
+- **Prayer window:** gold next name and exact start above the large light countdown; centered explanatory caption beneath. Data is visible immediately when the panel opens.
+- **Prayer rows:** six aligned entries with localized model status. Next uses accent, bold text, taller height and tonal fill; current uses bold text; passed rows use muted text. A preparation label replaces an empty timetable.
+- **Refresh:** full-width native button reports fetching, disables while fetching or offline, and sits after any refresh error.
+- **Worldwide location:** searchable 249-country dataset and 23 offline quick-city presets localized in English and Arabic. Country selection filters presets and subsequent online search. Selecting a preset commits coordinates and localized city/country text. Regional-method suggestions are enabled by default; choosing a method manually disables automatic selection. Online search reports searching, no matches and connection failure, with keyboard selection and Save/Cancel actions.
+- **Contextual Habous:** section, official-source toggle and searchable Habous cities are scoped to empty/MA country filters; city selection also depends on Habous being enabled.
+- **Hijri and coordinates:** ±2-day stepper with civil-calendar explanation; persistent latitude and longitude labels over equal-width unmirrored fields, validated offline Apply coordinates action, and desktop-timezone note.
+- **Native settings:** reuse `Button`, `Toggle`, `SearchableDropdown`, `Dropdown`, `ButtonGroup`, `TextField`, `PanelSectionHeader` and `StepperRow`. Shared interaction styling remains native. Opening settings focuses the online toggle; closing restores panel keyboard focus.
+- **Bar widget:** shared `WidgetButton` with horizontal margin and vertical padding of 8.75; imminent prayer uses its native active state. Left click opens, right cycles bar style, middle switches language. Tooltip carries next prayer, remaining time, Hijri date and location.
 
-Settings opacity has a `NumberAnimation` using `Style.duration(160)` and `Easing.OutCubic`; visibility and height switch with state, so do not assume a fully animated collapse. Data is immediately visible when the panel opens. Shared panel/control motion remains owned by Omarchy.
+Settings opacity uses `NumberAnimation` with `Style.duration(160)` and `Easing.OutCubic`. Visibility and height switch immediately; do not describe this as an animated drawer expansion.
 
 ## Do's and Don'ts
 
 ### Do:
 
-- Do preserve live Omarchy theme bindings.
-- Do keep Arabic labels readable and numeric times unmirrored.
-- Do show the next prayer and its exact time before settings.
+- Do preserve Noor as default and System colors as an explicit alternative.
+- Do use the implemented Arabic heading/body families and Noto Sans numerals.
+- Do keep country selection and offline city setup visible before contextual Morocco controls.
+- Do keep native Qt Quick controls and Omarchy scale bindings.
 
 ### Don't:
 
-- Don’t introduce a fixed palette or bundled display font.
-- Don’t add glow, ornamental clock motion, or a reveal that delays prayer data.
-- Don’t replace native shared controls with web approximations.
+- Don’t restore the rejected ring or a decorative clock face.
+- Don’t put screenshot-on-mosque artwork inside the working interface.
+- Don’t describe this native Linux panel as a web or mobile application.
+- Don’t add glow or a reveal that delays prayer information.

@@ -1,6 +1,6 @@
 # Salat Times for Omarchy
 
-Prayer times for the Omarchy bar: the next salah, the time remaining, the Hijri date, qibla, and the full day. Habous tables, AlAdhan, and offline calculation stay available when you are online or not.
+Prayer times for the Omarchy bar, with the Noor emerald-and-ivory appearance, dedicated Arabic typography, and setup for 249 countries and territories: the next salah, time remaining, Hijri date, Qibla, and the full day. Habous tables, AlAdhan, and offline calculation stay available when you are online or not.
 
 ![Salat Times panel](preview.png)
 
@@ -29,13 +29,13 @@ omarchy bar move abdelhakim.salat --section centerEnd
 - Middle-click, the language button, or `A` switches Arabic and English.
 - `S` opens settings; Tab moves through settings controls and Escape returns to the timetable.
 - `E` edits a location; `M` cycles calculation methods; `B` cycles bar styles.
-- The countdown leads a compact next-prayer surface. A small day dial places prayer markers clockwise from midnight and traces the current prayer window.
+- The next-prayer name and exact start lead a large typographic countdown. There is no ring or clock dial. Noor uses deep emerald, warm ivory and gold; select System colors in Settings to follow the desktop palette.
 - Friday Dhuhr reads as Jumu'ah. Rows mark passed, now, and next. In Ramadan, a line gives suhoor or iftar.
 - Qibla is the bearing from your coordinates to the Kaaba.
 
 ## Settings
 
-Choose a Moroccan Habous city, use your Omarchy weather location, search worldwide with **city, country**, or enter latitude and longitude without a network connection. Selecting an international search result switches away from Habous. Search results identify the region and country; the location only changes when you select a result. All clocks and countdowns use your desktop timezone, including when you explore a location abroad. Change your system timezone when travelling. Calculation methods include Morocco, MWL, Egypt, ISNA, Makkah, Karachi, Tehran, Jafari, Algeria, and Tunisia, with Standard or Hanafi Asr calculation and a minute correction. Reminders support notifications, a dismissible overlay, or silent mode, with optional advance reminders.
+Select a **Country** from 249 countries and territories, then a **Quick city**, or use **Search any city**. There are 23 built-in city presets, including Riyadh, Makkah, Medina, Cairo, Alexandria, New York, Chicago, Los Angeles, London, Toronto, Dubai and Jakarta; they work offline. Country-filtered search finds further towns and cities online. You can also follow your Omarchy weather location, select a Moroccan Habous city, or enter latitude and longitude offline. Selecting an international search result switches away from Habous. Search results identify the region and country; the location only changes when you select a result. All clocks and countdowns use your desktop timezone, including when you explore a location abroad. Change your system timezone when travelling. Country-based method suggestions use Umm Al-Qura for Saudi Arabia, the Egyptian General Authority for Egypt, and ISNA for the USA/Canada. They are starting points; select a method manually to follow your mosque. Methods also include Morocco, MWL, Karachi, Tehran, Jafari, Algeria, Tunisia, Gulf, Kuwait, Qatar, Singapore, France, Turkey, Russia, Dubai, Malaysia and Indonesia, with Standard or Hanafi Asr calculation and a minute correction. Reminders support notifications, a dismissible overlay, or silent mode, with optional advance reminders.
 
 **Hijri date:** the Islamic civil calendar replaces the previous incorrect conversion. Use the separate −2 to +2 day adjustment to align with your local moon-sighting authority. This is a calculated date, not an official sighting feed. The same adjustment controls the Ramadan fasting hint. Dates change at civil midnight.
 
@@ -70,7 +70,7 @@ QML uses virtual `qs` imports provided by Quickshell. Check runtime loading in t
 
 ## License
 
-MIT; see [LICENSE](LICENSE). The offline engine uses astronomical prayer-time formulas in the PrayTimes tradition. The English and Arabic previews are actual desktop captures. The marketplace mosque backdrop is AI-generated with OpenAI ImageGen; its generation prompt is recorded in `artwork/README.md`. No font files are bundled.
+MIT; see [LICENSE](LICENSE). The offline engine uses astronomical prayer-time formulas in the PrayTimes tradition. Arabic body text uses Noto Sans Arabic, with Noto Kufi Arabic for headings. English and numeric text use Noto Sans. These families are part of the standard Noto font collection; Qt falls back to an installed font when unavailable. The English and Arabic previews are actual desktop captures. The marketplace mosque backdrop is AI-generated with OpenAI ImageGen; its generation prompt is recorded in `artwork/README.md`. No font files are bundled.
 
 ## Questions
 
@@ -91,6 +91,10 @@ Yes. Disable online tables and enter your coordinates in Settings. The local eng
 ```sh
 omarchy-shell abdelhakim.salat.widget settings
 omarchy-shell salat status
+omarchy-shell salat theme noor
+omarchy-shell salat language ar
+# Open Saudi quick-city selection:
+omarchy-shell abdelhakim.salat.widget country SA
 ```
 
 ## Discover and contribute
@@ -98,3 +102,7 @@ omarchy-shell salat status
 [Omarchy plugin marketplace](https://plugins.omarchy.org/plugin.html?id=abdelhakim.salat) · [Report a bug](https://github.com/Abdelhakim-Baalla/omarchy-salat-times/issues) · [Changelog](CHANGELOG.md)
 
 Salat Times is an open-source Muslim prayer-time plugin for Omarchy Linux and its Quickshell desktop bar. It includes salah / salat times, adhan reminders, Arabic and English, a Hijri calendar, Qibla direction, and Ramadan suhoor and iftar information.
+
+## Data sources
+
+Country codes follow ISO 3166-1 (`iso-codes`); English and Arabic country names use ICU display names. Built-in city coordinates were retrieved from GeoNames through the [Open-Meteo geocoding API](https://open-meteo.com/en/docs/geocoding-api) on 6 November 2026. Calculation method identifiers and angles follow [AlAdhan's method list](https://api.aladhan.com/v1/methods). Search availability depends on the geocoder's coverage.
