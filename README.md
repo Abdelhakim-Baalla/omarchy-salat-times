@@ -1,12 +1,20 @@
-# Salat Times for Omarchy
+# Salat Times — prayer times for Omarchy
 
-Prayer times for the Omarchy bar, with the Noor emerald-and-ivory appearance, dedicated Arabic typography, and setup for 249 countries and territories: the next salah, time remaining, Hijri date, Qibla, and the full day. Habous tables, AlAdhan, and offline calculation stay available when you are online or not.
+![Salat Times — prayer times for Omarchy, with a blue-hour mosque skyline](marketplace.png)
 
-![Salat Times panel](preview.png)
+A Muslim prayer-time plugin for the Omarchy Linux bar. See the next salah, its countdown, today's timetable, the Hijri date and Qibla direction. The compact timeline follows your desktop colors and English font, with dedicated Arabic typography and a mirrored Arabic layout.
 
-![Salat Times in Arabic](preview-ar.png)
+Choose a location from **249 countries and territories**, use an offline city preset, or enter coordinates. Supports adhan notifications, Ramadan suhoor/iftar hints, Moroccan Habous tables, AlAdhan and offline calculation.
 
-![Salat Times listing card](marketplace.png)
+[View in the Omarchy marketplace](https://plugins.omarchy.org/plugin.html?id=abdelhakim.salat) · [Installation](#install) · [Location setup](#location-setup) · [Report an issue](https://github.com/Abdelhakim-Baalla/omarchy-salat-times/issues)
+
+## Screenshots
+
+Actual desktop captures of version 1.5.0. Your colors and English font follow your active Omarchy theme.
+
+| English | العربية |
+| --- | --- |
+| ![English prayer timeline with tomorrow's Fajr countdown](artwork/screenshots/panel-en.png) | ![Arabic prayer timeline with mirrored layout and Noto Arabic fonts](artwork/screenshots/panel-ar.png) |
 
 ## Install
 
@@ -24,22 +32,39 @@ omarchy bar move abdelhakim.salat --section centerEnd
 
 ## Daily use
 
-- Left-click the bar widget to open the timetable; Escape closes it.
-- Right-click the widget to cycle its label styles.
-- Middle-click, the language button, or `A` switches Arabic and English.
-- `S` opens settings; Tab moves through settings controls and Escape returns to the timetable.
-- `E` edits a location; `M` cycles calculation methods; `B` cycles bar styles.
-- The next-prayer name and exact start lead a large typographic countdown. There is no ring or clock dial. Noor uses deep emerald, warm ivory and gold; select System colors in Settings to follow the desktop palette.
-- Friday Dhuhr reads as Jumu'ah. Rows mark passed, now, and next. In Ramadan, a line gives suhoor or iftar.
-- Qibla is the bearing from your coordinates to the Kaaba.
+- Left-click the bar widget to open the timeline. Escape closes it.
+- The highlighted prayer contains its countdown and exact start time. After Isha, tomorrow's Fajr appears below today's schedule.
+- Open **Location**, **Reminders** or **Settings** directly from the footer; **Back to timetable** returns to the day.
+- Use the language button or `A` to switch Arabic/English. Middle-clicking the widget also switches languages.
+- `E` opens Location; `S` opens prayer settings. Tab navigates controls and Escape returns from settings.
+- Right-click or `B` cycles bar labels. `M` cycles calculation methods.
+- Friday Dhuhr reads as Jumu'ah. Sunrise is a day marker. Ramadan adds a suhoor or iftar hint.
 
-## Settings
+## Location setup
 
-Select a **Country** from 249 countries and territories, then a **Quick city**, or use **Search any city**. There are 23 built-in city presets, including Riyadh, Makkah, Medina, Cairo, Alexandria, New York, Chicago, Los Angeles, London, Toronto, Dubai and Jakarta; they work offline. Country-filtered search finds further towns and cities online. You can also follow your Omarchy weather location, select a Moroccan Habous city, or enter latitude and longitude offline. Selecting an international search result switches away from Habous. Search results identify the region and country; the location only changes when you select a result. All clocks and countdowns use your desktop timezone, including when you explore a location abroad. Change your system timezone when travelling. Country-based method suggestions use Umm Al-Qura for Saudi Arabia, the Egyptian General Authority for Egypt, and ISNA for the USA/Canada. They are starting points; select a method manually to follow your mosque. Methods also include Morocco, MWL, Karachi, Tehran, Jafari, Algeria, Tunisia, Gulf, Kuwait, Qatar, Singapore, France, Turkey, Russia, Dubai, Malaysia and Indonesia, with Standard or Hanafi Asr calculation and a minute correction. Reminders support notifications, a dismissible overlay, or silent mode, with optional advance reminders.
+1. Open **Location**. The current saved location appears above the controls.
+2. Optionally choose a **Country filter**. This narrows the available cities; it does not move your saved location.
+3. Choose an **Offline city preset**, or use **Search any city** and select a matching result. City search requires internet access. Results identify the region and country.
 
-**Hijri date:** the Islamic civil calendar replaces the previous incorrect conversion. Use the separate −2 to +2 day adjustment to align with your local moon-sighting authority. This is a calculated date, not an official sighting feed. The same adjustment controls the Ramadan fasting hint. Dates change at civil midnight.
+The 23 offline presets include Riyadh, Makkah, Medina, Cairo, Alexandria, New York, Chicago, Los Angeles, London, Toronto, Dubai and Jakarta. All 249 countries/territories are searchable filters; the preset list is deliberately smaller. For a place outside the presets, search online or use coordinates.
 
-The source shown beside the daily schedule identifies the data actually in use: Habous, AlAdhan, or offline calculation. Sunrise is included as a day marker, not a prayer. Calculated results can differ from a local mosque’s timetable. Tomorrow’s missing online data is calculated locally.
+**More location options** lets you follow your Omarchy weather location, choose a Moroccan Habous city, or enter latitude and longitude without internet. Selecting an international city switches away from Habous.
+
+All times use your **desktop timezone**, even when viewing another country. Change your system timezone when travelling. Qibla is calculated from the selected coordinates to the Kaaba.
+
+## Prayer settings and calendar
+
+**Settings** contains online/offline tables, calculation method, Asr convention, minute correction and Hijri-day adjustment.
+
+Country-based method suggestions use Umm Al-Qura for Saudi Arabia, the Egyptian General Authority for Egypt, and ISNA for the USA/Canada. These are starting points; choose the method your local mosque follows. A manual method selection disables automatic suggestions. Methods also include Morocco, MWL, Karachi, Tehran, Jafari, Algeria, Tunisia, Gulf, Kuwait, Qatar, Singapore, France, Turkey, Russia, Dubai, Malaysia and Indonesia. Standard/Shafi and Hanafi Asr are available.
+
+**Hijri date:** uses the Islamic civil calendar with an independent −2 to +2 day adjustment for local moon-sighting decisions. It is a calculated date, not an official sighting feed. The adjustment also controls the Ramadan hint. Dates change at civil midnight.
+
+The timetable's source action identifies Habous, AlAdhan or offline calculation and lets you refresh when online tables are enabled. When tomorrow's online data is unavailable, tomorrow is calculated locally. Calculated times can differ from a local mosque's timetable.
+
+## Reminders
+
+Open **Reminders** to choose notifications, a dismissible overlay or silent mode. Enable alerts at prayer time, before prayer, or both, and adjust the advance interval. These are desktop alerts; the plugin does not include an audio adhan recording.
 
 ## Network and privacy
 
@@ -64,13 +89,15 @@ Removal leaves the local settings file so a later installation can reuse it. Del
 ```sh
 omarchy plugin validate .
 node tests/model.test.cjs
+# Optional native interaction regression test (requires Quickshell):
+python3 tests/search.test.py
 ```
 
 QML uses virtual `qs` imports provided by Quickshell. Check runtime loading in the actual shell; standalone `qmllint` needs those imports configured and otherwise reports unresolved types. Desktop animation preferences are honored through Omarchy’s native controls and `Style.duration`.
 
 ## License
 
-MIT; see [LICENSE](LICENSE). The offline engine uses astronomical prayer-time formulas in the PrayTimes tradition. Arabic body text uses Noto Sans Arabic, with Noto Kufi Arabic for headings. English and numeric text use Noto Sans. These families are part of the standard Noto font collection; Qt falls back to an installed font when unavailable. The English and Arabic previews are actual desktop captures. The marketplace mosque backdrop is AI-generated with OpenAI ImageGen; its generation prompt is recorded in `artwork/README.md`. No font files are bundled.
+MIT; see [LICENSE](LICENSE). The offline engine uses astronomical prayer-time formulas in the PrayTimes tradition. Arabic body text uses Noto Sans Arabic, with Noto Kufi Arabic for headings. English and numeric text use your current Omarchy font. The Arabic families are part of the Noto font collection; Qt falls back to an installed font when unavailable. The English and Arabic previews are actual desktop captures. The blue-hour mosque cover is AI-generated with OpenAI ImageGen; its exact generation prompt and the design alternatives are recorded in [artwork/README.md](artwork/README.md). No font files are bundled.
 
 ## Questions
 
@@ -84,14 +111,15 @@ Local moon-sighting decisions can differ from a civil calendar. Adjust the Hijri
 
 ### Can I use prayer times offline?
 
-Yes. Disable online tables and enter your coordinates in Settings. The local engine calculates the timetable; city-name search requires internet access. At extreme latitudes the engine uses an estimated fallback when sunrise or twilight does not occur. Consult your community’s timetable for these cases.
+Yes. Disable online tables in Settings, then choose an offline city preset or enter coordinates under Location → More location options. The local engine calculates the timetable; city-name search requires internet access. At extreme latitudes the engine uses an estimated fallback when sunrise or twilight does not occur. Consult your community’s timetable for these cases.
 
 ### How do I open settings from a script?
 
 ```sh
 omarchy-shell abdelhakim.salat.widget settings
 omarchy-shell salat status
-omarchy-shell salat theme noor
+omarchy-shell abdelhakim.salat.widget page location
+omarchy-shell abdelhakim.salat.widget page reminders
 omarchy-shell salat language ar
 # Open Saudi quick-city selection:
 omarchy-shell abdelhakim.salat.widget country SA
