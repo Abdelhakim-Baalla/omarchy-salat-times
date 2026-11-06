@@ -13,12 +13,23 @@ var METHODS = {
   Tehran:  { fajr: 17.7, isha: 14,   maghrib: "angle", maghribAngle: 4.5, ishaInterval: 0, label: "Institute of Geophysics, Tehran", aladhan: 7 },
   Jafari:  { fajr: 16,   isha: 14,   maghrib: "angle", maghribAngle: 4, ishaInterval: 0,  label: "Shia Ithna Ashari", aladhan: 0 },
   // Maghreb phone apps usually track MWL/Egypt noon, then add ~+5 after zawal.
-  Morocco: { fajr: 18,   isha: 17,   maghrib: "angle", maghribAngle: 0, ishaInterval: 0,  label: "Morocco", aladhan: 21 },
+  Morocco: { fajr: 19,   isha: 17,   maghrib: "angle", maghribAngle: 0, ishaInterval: 0,  label: "Morocco", aladhan: 21 },
   Algeria: { fajr: 18,   isha: 17,   maghrib: "angle", maghribAngle: 0, ishaInterval: 0,  label: "Algeria", aladhan: 19 },
-  Tunisia: { fajr: 18,   isha: 18,   maghrib: "angle", maghribAngle: 0, ishaInterval: 0,  label: "Tunisia", aladhan: 18 }
+  Tunisia: { fajr: 18,   isha: 18,   maghrib: "angle", maghribAngle: 0, ishaInterval: 0,  label: "Tunisia", aladhan: 18 },
+  Gulf: { fajr: 19.5, isha: 0, ishaInterval: 90, label: "Gulf Region", aladhan: 8 },
+  Kuwait: { fajr: 18, isha: 17.5, label: "Kuwait", aladhan: 9 },
+  Qatar: { fajr: 18, isha: 0, ishaInterval: 90, label: "Qatar", aladhan: 10 },
+  Singapore: { fajr: 20, isha: 18, label: "Singapore · MUIS", aladhan: 11 },
+  France: { fajr: 12, isha: 12, label: "France · UOIF", aladhan: 12 },
+  Turkey: { fajr: 18, isha: 17, label: "Turkey · Diyanet (experimental)", aladhan: 13 },
+  Russia: { fajr: 16, isha: 15, label: "Russia", aladhan: 14 },
+  Dubai: { fajr: 18.2, isha: 18.2, label: "Dubai (experimental)", aladhan: 16 },
+  Malaysia: { fajr: 20, isha: 18, label: "Malaysia · JAKIM", aladhan: 17 },
+  Indonesia: { fajr: 20, isha: 18, label: "Indonesia · Kemenag", aladhan: 20 }
+
 }
 
-var METHOD_ORDER = ["Morocco", "MWL", "Egypt", "ISNA", "Makkah", "Karachi", "Tehran", "Jafari", "Algeria", "Tunisia"]
+var METHOD_ORDER = ["Morocco", "MWL", "Egypt", "ISNA", "Makkah", "Karachi", "Tehran", "Jafari", "Algeria", "Tunisia", "Gulf", "Kuwait", "Qatar", "Singapore", "France", "Turkey", "Russia", "Dubai", "Malaysia", "Indonesia"]
 
 var NAMES = {
   en: {
@@ -707,7 +718,8 @@ function parseGeocodingResults(raw) {
         description: region.slice(0, 240),
         latitude: lat,
         longitude: lng,
-        countryCode: String(r.country_code || "").slice(0, 2),
+        countryCode: String(r.country_code || "").slice(0, 2).toUpperCase(),
+        countryName: String(r.country || "").slice(0, 120),
         timezone: String(r.timezone || "").slice(0, 80)
       })
     }
@@ -833,4 +845,40 @@ function dialJourney(schedule, now) {
     hasWindow: true,
     wrapsMidnight: false
   }
+}
+
+// Suggestions are starting points; users can retain their mosque's convention.
+function methodForCountry(code) {
+  var methods = { MA: "Morocco", SA: "Makkah", EG: "Egypt", US: "ISNA", CA: "ISNA",
+    PK: "Karachi", BD: "Karachi", IN: "Karachi", AF: "Karachi", IR: "Tehran",
+    DZ: "Algeria", TN: "Tunisia", AE: "Dubai", QA: "Qatar", KW: "Kuwait",
+    BH: "Gulf", OM: "Gulf", SG: "Singapore", MY: "Malaysia", ID: "Indonesia",
+    TR: "Turkey", RU: "Russia", FR: "France" }
+  return methods[String(code || "").toUpperCase()] || "MWL"
+}
+
+function countryOptions(countries, lang) {
+  var ar = validLang(lang) === "ar"
+  var options = [{value: "", label: ar ? "كل البلدان" : "All countries"}]
+  for (var i = 0; countries && i < countries.length; i++) {
+    var c = countries[i]
+    options.push({value: c.code, label: ar ? c.nameAr : c.name})
+  }
+  return options
+}
+
+function cityPresetOptions(cities, code) {
+  var options = []
+  for (var i = 0; cities && i < cities.length; i++) {
+    if (!code || cities[i].countryCode === code)
+      options.push({value: String(i), label: cities[i].name + " · " + cities[i].countryCode})
+  }
+  return options
+}
+
+function geocodingUrl(query, countryCode, lang) {
+  var code = /^[A-Z]{2}$/.test(String(countryCode || "")) ? countryCode : ""
+  return "https://geocoding-api.open-meteo.com/v1/search?count=5&format=json&language="
+    + validLang(lang) + "&name=" + encodeURIComponent(String(query || "").slice(0, 160))
+    + (code ? "&countryCode=" + code : "")
 }

@@ -1,0 +1,163 @@
+[
+  {
+    "name": "Riyadh",
+    "countryCode": "SA",
+    "latitude": 24.68773,
+    "longitude": 46.72185,
+    "timezone": "Asia/Riyadh"
+  },
+  {
+    "name": "Mecca",
+    "countryCode": "SA",
+    "latitude": 21.42664,
+    "longitude": 39.82563,
+    "timezone": "Asia/Riyadh"
+  },
+  {
+    "name": "Medina",
+    "countryCode": "SA",
+    "latitude": 24.46861,
+    "longitude": 39.61417,
+    "timezone": "Asia/Riyadh"
+  },
+  {
+    "name": "Cairo",
+    "countryCode": "EG",
+    "latitude": 30.06263,
+    "longitude": 31.24967,
+    "timezone": "Africa/Cairo"
+  },
+  {
+    "name": "Alexandria",
+    "countryCode": "EG",
+    "latitude": 31.20176,
+    "longitude": 29.91582,
+    "timezone": "Africa/Cairo"
+  },
+  {
+    "name": "New York",
+    "countryCode": "US",
+    "latitude": 40.71427,
+    "longitude": -74.00597,
+    "timezone": "America/New_York"
+  },
+  {
+    "name": "Chicago",
+    "countryCode": "US",
+    "latitude": 41.85003,
+    "longitude": -87.65005,
+    "timezone": "America/Chicago"
+  },
+  {
+    "name": "Los Angeles",
+    "countryCode": "US",
+    "latitude": 34.05223,
+    "longitude": -118.24368,
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "name": "London",
+    "countryCode": "GB",
+    "latitude": 51.50853,
+    "longitude": -0.12574,
+    "timezone": "Europe/London"
+  },
+  {
+    "name": "Toronto",
+    "countryCode": "CA",
+    "latitude": 43.70643,
+    "longitude": -79.39864,
+    "timezone": "America/Toronto"
+  },
+  {
+    "name": "Paris",
+    "countryCode": "FR",
+    "latitude": 48.85341,
+    "longitude": 2.3488,
+    "timezone": "Europe/Paris"
+  },
+  {
+    "name": "Berlin",
+    "countryCode": "DE",
+    "latitude": 52.52437,
+    "longitude": 13.41053,
+    "timezone": "Europe/Berlin"
+  },
+  {
+    "name": "Istanbul",
+    "countryCode": "TR",
+    "latitude": 41.01384,
+    "longitude": 28.94966,
+    "timezone": "Europe/Istanbul"
+  },
+  {
+    "name": "Karachi",
+    "countryCode": "PK",
+    "latitude": 24.8608,
+    "longitude": 67.0104,
+    "timezone": "Asia/Karachi"
+  },
+  {
+    "name": "Dubai",
+    "countryCode": "AE",
+    "latitude": 25.07725,
+    "longitude": 55.30927,
+    "timezone": "Asia/Dubai"
+  },
+  {
+    "name": "Doha",
+    "countryCode": "QA",
+    "latitude": 25.28545,
+    "longitude": 51.53096,
+    "timezone": "Asia/Qatar"
+  },
+  {
+    "name": "Kuwait City",
+    "countryCode": "KW",
+    "latitude": 29.367,
+    "longitude": 47.97429,
+    "timezone": "Asia/Kuwait"
+  },
+  {
+    "name": "Kuala Lumpur",
+    "countryCode": "MY",
+    "latitude": 3.1412,
+    "longitude": 101.68653,
+    "timezone": "Asia/Kuala_Lumpur"
+  },
+  {
+    "name": "Jakarta",
+    "countryCode": "ID",
+    "latitude": -6.21462,
+    "longitude": 106.84513,
+    "timezone": "Asia/Jakarta"
+  },
+  {
+    "name": "Sydney",
+    "countryCode": "AU",
+    "latitude": -33.86785,
+    "longitude": 151.20732,
+    "timezone": "Australia/Sydney"
+  },
+  {
+    "name": "New Delhi",
+    "countryCode": "IN",
+    "latitude": 28.62137,
+    "longitude": 77.2148,
+    "timezone": "Asia/Kolkata"
+  },
+  {
+    "name": "Dhaka",
+    "countryCode": "BD",
+    "latitude": 23.7104,
+    "longitude": 90.40744,
+    "timezone": "Asia/Dhaka"
+  },
+  {
+    "name": "Agadir",
+    "countryCode": "MA",
+    "latitude": 30.42018,
+    "longitude": -9.59815,
+    "timezone": "Africa/Casablanca"
+  }
+]

@@ -21,6 +21,11 @@ Item {
 
   // --------------------------------------------------------- settings
   property string method: "Morocco"
+  property string appearance: "noor"
+  property string countryCode: ""
+  property bool autoMethod: true
+  property var countries: []
+  property var cityPresets: []
   property string madhab: "Standard"
   property string lang: "ar"
   property string reminderMode: "notification"
@@ -74,7 +79,7 @@ Item {
   readonly property string nextTime: nextPrayer ? Model.formatClock(nextPrayer.date, true) : "--:--"
 
   readonly property string hijriLabel: Model.formatHijri(nowDate, lang, hijriAdjustment)
-  readonly property string gregorianLabel: Qt.formatDate(nowDate, "dddd d MMMM yyyy")
+  readonly property string gregorianLabel: nowDate.toLocaleDateString(Qt.locale(lang === "ar" ? "ar_MA" : "en_GB"), "dddd d MMMM yyyy")
   readonly property string locationLabel: locationName !== "" ? locationName : (latitude.toFixed(2) + ", " + longitude.toFixed(2))
   readonly property string qiblaLabel: Model.qiblaLabel(latitude, longitude, lang)
   readonly property string fastingHint: Model.fastingHint(nowDate, todaySchedule, lang, hijriAdjustment)
@@ -133,6 +138,8 @@ Item {
     if (!isFinite(nid)) return
     for (var i = 0; i < habousCities.length; i++) {
       if (habousCities[i].id === nid) {
+        countryCode = "MA"
+        if (autoMethod) method = "Morocco"
         habousCityId = nid
         habousCityName = habousCities[i].name
         locationName = habousCities[i].name
@@ -388,7 +395,28 @@ Item {
     }
   }
 
+  FileView {
+    path: Qt.resolvedUrl("countries.json")
+    printErrors: false
+    onLoaded: { try { root.countries = JSON.parse(text()) } catch(e) { root.countries = [] } }
+  }
+  FileView {
+    path: Qt.resolvedUrl("city-presets.json")
+    printErrors: false
+    onLoaded: { try { root.cityPresets = JSON.parse(text()) } catch(e) { root.cityPresets = [] } }
+  }
+
+  function selectCityPreset(index) {
+    var city = cityPresets[Number(index)]
+    if (!city) return
+    var countryName = ""
+    for (var i = 0; i < countries.length; i++)
+      if (countries[i].code === city.countryCode) countryName = lang === "ar" ? countries[i].nameAr : countries[i].name
+    setLocation(city.name + (countryName ? ", " + countryName : ""), city.latitude, city.longitude, city.countryCode)
+  }
+
   function setMethod(id) {
+    autoMethod = false
     method = Model.validMethod(id)
   }
 
@@ -420,8 +448,10 @@ Item {
     method = ids[(i + 1) % ids.length]
   }
 
-  function setLocation(name, lat, lng, countryCode) {
+  function setLocation(name, lat, lng, country) {
     if (!isFinite(Number(lat)) || !isFinite(Number(lng)) || Math.abs(Number(lat)) > 90 || Math.abs(Number(lng)) > 180) return
+    countryCode = /^[A-Z]{2}$/.test(String(country || "")) ? country : ""
+    if (autoMethod && countryCode) method = Model.methodForCountry(countryCode)
     useHabous = countryCode === "MA" && Model.findHabousCity(habousCities, name) !== null
     useWeatherLocation = false
     locationName = String(name || "")
@@ -547,6 +577,9 @@ Item {
     if (loaded) return
     var data = {}
     try { data = JSON.parse(raw || "{}") } catch (e) { data = {} }
+    appearance = data.appearance === "system" ? "system" : "noor"
+    countryCode = /^[A-Z]{2}$/.test(String(data.countryCode || "")) ? data.countryCode : ""
+    autoMethod = data.autoMethod === undefined ? true : data.autoMethod === true
     hijriAdjustment = Model.clampInt(data.hijriAdjustment, 0, -2, 2)
     method = Model.validMethod(data.method || "Morocco")
     madhab = Model.validMadhab(data.madhab || "Standard")
@@ -577,7 +610,10 @@ Item {
 
   function flush() {
     stateFile.setText(JSON.stringify({
-      version: 2,
+      version: 3,
+      appearance: appearance,
+      countryCode: countryCode,
+      autoMethod: autoMethod,
       hijriAdjustment: hijriAdjustment,
       method: method,
       madhab: madhab,
@@ -612,6 +648,9 @@ Item {
     else recomputeOffline()
     scheduleSave()
   }
+  onAppearanceChanged: scheduleSave()
+  onAutoMethodChanged: scheduleSave()
+  onCountryCodeChanged: scheduleSave()
   onHijriAdjustmentChanged: scheduleSave()
   onMethodChanged: { if (loaded) { recompute(); scheduleSave() } }
   onMadhabChanged: { if (loaded) { recompute(); scheduleSave() } }
@@ -696,6 +735,11 @@ Item {
         remainingMs: Math.round(root.remainingMs),
         time: root.nextTime,
         location: root.locationLabel,
+        country: root.countryCode,
+        countries: root.countries.length,
+        cityPresets: root.cityPresets.length,
+        appearance: root.appearance,
+        autoMethod: root.autoMethod,
         method: root.method,
         madhab: root.madhab,
         lang: root.lang,
@@ -767,7 +811,7 @@ Item {
           PlainLabel {
             anchors.centerIn: parent
             text: root.overlayGlyph
-            font.family: Style.font.family
+            font.family: root.lang === "ar" ? "Noto Sans Arabic" : "Noto Sans"
             font.pixelSize: 48
             color: Color.menu.text
           }
@@ -777,7 +821,7 @@ Item {
           width: parent.width
           horizontalAlignment: Text.AlignHCenter
           text: root.overlayTitle
-          font.family: Style.font.family
+          font.family: root.lang === "ar" ? "Noto Sans Arabic" : "Noto Sans"
           font.pixelSize: Style.font.heading
           font.bold: true
           color: Color.menu.text
@@ -788,7 +832,7 @@ Item {
           width: parent.width
           horizontalAlignment: Text.AlignHCenter
           text: root.overlayBody
-          font.family: Style.font.family
+          font.family: root.lang === "ar" ? "Noto Sans Arabic" : "Noto Sans"
           font.pixelSize: Style.font.body
           color: Qt.darker(Color.menu.text, 1.4)
           wrapMode: Text.WordWrap
