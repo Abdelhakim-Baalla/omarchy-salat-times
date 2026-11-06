@@ -40,7 +40,8 @@ Item {
         var angle = start + pt.fraction * Math.PI * 2
         var next = pt.id === j.nextId
         ctx.beginPath()
-        ctx.fillStyle = next ? ac : Qt.rgba(fg.r, fg.g, fg.b, pt.isSunrise ? 0.5 : 0.8)
+        var markerAlpha = pt.passed ? 0.35 : (pt.isSunrise ? 0.5 : 0.8)
+        ctx.fillStyle = next ? ac : Qt.rgba(fg.r, fg.g, fg.b, markerAlpha)
         ctx.arc(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r,
           Style.space(next ? 4.5 : 2.5), 0, Math.PI * 2)
         ctx.fill()

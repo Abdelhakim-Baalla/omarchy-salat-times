@@ -245,6 +245,15 @@ Ui.Panel {
               font.pixelSize: root.arabic ? Math.max(Style.font.bodySmall, Style.space(12)) : Style.font.bodySmall
               wrapMode: Text.WordWrap
             }
+            PlainLabel {
+              width: parent.width
+              text: root.salat ? root.salat.qiblaLabel : ""
+              horizontalAlignment: root.readingAlignment
+              wrapMode: Text.WordWrap
+              color: root.contentForeground
+              font.family: root.contentFontFamily
+              font.pixelSize: root.arabic ? Math.max(Style.font.bodySmall, Style.space(12)) : Style.font.bodySmall
+            }
             Ui.Button {
               width: parent.width
               leftAlign: true
@@ -262,68 +271,74 @@ Ui.Panel {
             }
           }
 
-          // One answer leads: prayer, time remaining, then its exact start.
+          // The countdown is inscribed in the day ring. The arc is only the
+          // current prayer window, so the ornament and the answer are one object.
           Item {
             width: parent.width
-            height: Math.max(Style.space(142), countdown.implicitHeight)
-            Column {
-              id: countdown
-              width: parent.width - dial.width - Style.space(20)
-              anchors.left: parent.left
-              anchors.verticalCenter: parent.verticalCenter
-              spacing: Style.space(4)
-              PlainLabel {
-                width: parent.width
-                text: root.heroName || (root.arabic ? "جارٍ الحساب" : "Calculating")
-                horizontalAlignment: root.readingAlignment
-                color: root.accent
-                font.family: root.contentFontFamily
-                font.pixelSize: Style.font.heading
-                font.bold: true
-                elide: Text.ElideRight
-              }
-              PlainLabel {
-                width: parent.width
-                text: root.heroTime
-                horizontalAlignment: root.readingAlignment
-                color: root.contentForeground
-                font.family: root.contentFontFamily
-                font.pixelSize: Style.space(42)
-                font.weight: Font.DemiBold
-                fontSizeMode: Text.HorizontalFit
-                minimumPixelSize: Style.space(28)
-                LayoutMirroring.enabled: false
-              }
-              PlainLabel {
-                width: parent.width
-                text: (root.arabic ? "متبقي · " : "Remaining · ") + root.heroWhen
-                horizontalAlignment: root.readingAlignment
-                color: root.muted
-                font.family: root.contentFontFamily
-                font.pixelSize: root.arabic ? Math.max(Style.font.bodySmall, Style.space(12)) : Style.font.bodySmall
-                wrapMode: Text.WordWrap
-              }
-            }
+            height: dial.width
             DayDial {
               id: dial
-              anchors.right: parent.right
+              anchors.horizontalCenter: parent.horizontalCenter
               anchors.verticalCenter: parent.verticalCenter
-              width: Style.space(128)
+              width: Style.space(232)
               height: width
               foreground: root.contentForeground
               accent: root.accent
               points: root.salat ? root.salat.dialPoints : []
               journey: root.salat ? root.salat.dialJourney : ({})
-              PlainLabel {
+              Column {
+                width: Style.space(148)
                 anchors.centerIn: parent
-                text: root.salat ? root.salat.nextTime : "—"
-                color: root.contentForeground
-                font.family: root.contentFontFamily
-                font.pixelSize: root.arabic ? Math.max(Style.font.body, Style.space(14)) : Style.font.body
-                font.bold: true
-                LayoutMirroring.enabled: false
+                spacing: Style.space(2)
+                PlainLabel {
+                  width: parent.width
+                  text: root.heroName || (root.arabic ? "جارٍ الحساب" : "Calculating")
+                  horizontalAlignment: Text.AlignHCenter
+                  color: root.accent
+                  font.family: root.contentFontFamily
+                  font.pixelSize: Style.font.heading
+                  font.bold: true
+                  elide: Text.ElideRight
+                }
+                PlainLabel {
+                  width: parent.width
+                  text: root.heroTime
+                  horizontalAlignment: Text.AlignHCenter
+                  color: root.contentForeground
+                  font.family: root.contentFontFamily
+                  font.pixelSize: Style.space(36)
+                  font.weight: Font.DemiBold
+                  fontSizeMode: Text.HorizontalFit
+                  minimumPixelSize: Style.space(22)
+                  LayoutMirroring.enabled: false
+                }
+                PlainLabel {
+                  width: parent.width
+                  text: root.heroWhen
+                    ? ((root.salat && root.salat.nextIsTomorrow)
+                        ? root.heroWhen
+                        : ((root.arabic ? "عند " : "at ") + root.heroWhen))
+                    : ""
+                  horizontalAlignment: Text.AlignHCenter
+                  color: root.muted
+                  font.family: root.contentFontFamily
+                  font.pixelSize: root.arabic ? Math.max(Style.font.bodySmall, Style.space(12)) : Style.font.bodySmall
+                  elide: Text.ElideRight
+                  LayoutMirroring.enabled: false
+                }
               }
             }
+          }
+
+          PlainLabel {
+            width: parent.width
+            visible: root.salat && root.salat.fastingHint !== ""
+            text: root.salat ? root.salat.fastingHint : ""
+            horizontalAlignment: root.readingAlignment
+            color: root.accent
+            font.family: root.contentFontFamily
+            font.pixelSize: root.arabic ? Math.max(Style.font.body, Style.space(14)) : Style.font.body
+            wrapMode: Text.WordWrap
           }
 
           Row {
@@ -361,10 +376,17 @@ Ui.Panel {
                 required property var modelData
                 required property int index
                 readonly property bool isNext: modelData.isNext === true
+                readonly property bool isNow: modelData.isNow === true
+                readonly property bool isPassed: modelData.passed === true
+                readonly property color rowColor: isNext
+                  ? root.accent
+                  : (isPassed ? root.muted : root.contentForeground)
                 width: timeline.width
                 height: Style.space(40)
                 radius: Style.cornerRadius
-                color: isNext ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.12) : "transparent"
+                color: isNext
+                  ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, root.salat && root.salat.imminent ? 0.22 : 0.12)
+                  : "transparent"
                 Row {
                   anchors.fill: parent
                   anchors.leftMargin: Style.space(12)
@@ -375,19 +397,22 @@ Ui.Panel {
                     anchors.verticalCenter: parent.verticalCenter
                     text: modelData.name
                     horizontalAlignment: root.readingAlignment
-                    color: isNext ? root.accent : root.contentForeground
+                    color: rowColor
                     font.family: root.contentFontFamily
                     font.pixelSize: root.arabic ? Math.max(Style.font.body, Style.space(14)) : Style.font.body
-                    font.bold: isNext
+                    font.bold: isNext || isNow
                     elide: Text.ElideRight
                   }
                   PlainLabel {
                     id: rowState
+                    width: Style.space(64)
                     anchors.verticalCenter: parent.verticalCenter
-                    text: isNext ? (root.arabic ? "التالي" : "Next") : ""
-                    color: root.muted
+                    text: modelData.statusLabel || ""
+                    horizontalAlignment: Text.AlignHCenter
+                    color: isNext ? root.accent : root.muted
                     font.family: root.contentFontFamily
                     font.pixelSize: root.arabic ? Math.max(Style.font.bodySmall, Style.space(12)) : Style.font.bodySmall
+                    elide: Text.ElideRight
                   }
                   PlainLabel {
                     id: prayerTime
@@ -395,10 +420,10 @@ Ui.Panel {
                     anchors.verticalCenter: parent.verticalCenter
                     horizontalAlignment: Text.AlignRight
                     text: modelData.time
-                    color: isNext ? root.accent : root.contentForeground
+                    color: rowColor
                     font.family: root.contentFontFamily
                     font.pixelSize: root.arabic ? Math.max(Style.font.body, Style.space(14)) : Style.font.body
-                    font.bold: isNext
+                    font.bold: isNext || isNow
                     LayoutMirroring.enabled: false
                   }
                 }

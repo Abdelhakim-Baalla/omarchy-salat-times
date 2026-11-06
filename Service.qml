@@ -63,21 +63,23 @@ Item {
     ? Math.max(0, nextPrayer.date.getTime() - _now) : 0
   readonly property string remainingLabel: Model.formatCountdown(remainingMs)
   readonly property string remainingShort: Model.formatCountdownShort(remainingMs)
-  readonly property string nextName: nextPrayer ? Model.prayerName(nextPrayer.id, lang) : ""
-  readonly property string nextNameEn: nextPrayer ? Model.prayerName(nextPrayer.id, "en") : ""
-  readonly property string nextNameAr: nextPrayer ? Model.prayerName(nextPrayer.id, "ar") : ""
+  readonly property string nextName: nextPrayer ? Model.prayerName(nextPrayer.id, lang, nextPrayer.date) : ""
+  readonly property string nextNameEn: nextPrayer ? Model.prayerName(nextPrayer.id, "en", nextPrayer.date) : ""
+  readonly property string nextNameAr: nextPrayer ? Model.prayerName(nextPrayer.id, "ar", nextPrayer.date) : ""
   readonly property string nextGlyph: nextPrayer ? Model.prayerGlyph(nextPrayer.id) : Model.prayerGlyph("salat")
   readonly property string nextTime: nextPrayer ? Model.formatClock(nextPrayer.date, true) : "--:--"
 
   readonly property string hijriLabel: Model.formatHijri(nowDate, lang)
   readonly property string gregorianLabel: Qt.formatDate(nowDate, "dddd d MMMM yyyy")
   readonly property string locationLabel: locationName !== "" ? locationName : (latitude.toFixed(2) + ", " + longitude.toFixed(2))
+  readonly property string qiblaLabel: Model.qiblaLabel(latitude, longitude, lang)
+  readonly property string fastingHint: Model.fastingHint(nowDate, todaySchedule, lang)
   readonly property string methodLabel: Model.methodLabel(method)
   readonly property string barText: Model.barLabel(barStyle, nextInfo, nowDate, lang)
   readonly property string dayKey: Model.dateKey(nowDate)
 
   readonly property real dayProgress: Model.dayFraction(nowDate)
-  readonly property var dialPoints: Model.dialPoints(todaySchedule)
+  readonly property var dialPoints: Model.dialPoints(todaySchedule, nowDate)
   readonly property var dialJourney: Model.dialJourney(todaySchedule, nowDate)
 
   // Imminent: within 15 minutes of next prayer — bar can emphasize.
@@ -179,6 +181,7 @@ Item {
     if (!onlineEnabled || fetching) return
     fetching = true
     if (useHabous) {
+      habousFetch.fellBack = false
       habousFetch.command = [
         "curl", "-fsS", "--max-time", "12", "--max-filesize", "1048576", "-A", "Mozilla/5.0",
         Model.habousUrl(habousCityId)
@@ -201,6 +204,12 @@ Item {
 
   Process {
     id: habousFetch
+    property bool fellBack: false
+    function fallBack() {
+      if (fellBack || !root.onlineEnabled) return
+      fellBack = true
+      root.fetchAladhan()
+    }
     command: ["true"]
     stdout: StdioCollector {
       onStreamFinished: {
@@ -217,13 +226,12 @@ Item {
           root.applySchedules(parsed.today, tom, "habous")
           if (root.habousCityName) root.locationName = root.habousCityName
         } else {
-          root.fetchAladhan()
+          habousFetch.fallBack()
         }
       }
     }
     onExited: function(code) {
-      if (!root.onlineEnabled) return
-      if (code !== 0) root.fetchAladhan()
+      if (code !== 0) habousFetch.fallBack()
     }
   }
 
@@ -423,18 +431,26 @@ Item {
       }
     }
 
-    if (notifyAtAdhan && remainingMs <= 1000) {
-      var adhanKey = Model.notifyKey(id, "adhan", keyDay)
-      if (!notifiedKeys[adhanKey]) {
-        var copy2 = {}
-        for (var k2 in notifiedKeys) copy2[k2] = notifiedKeys[k2]
+    if (notifyAtAdhan) {
+      var due = Model.duePrayers(todaySchedule, nowDate, 20000)
+      var changed = false
+      var copy2 = {}
+      for (var k2 in notifiedKeys) copy2[k2] = notifiedKeys[k2]
+      for (var d = 0; d < due.length; d++) {
+        var prayer = due[d]
+        var adhanKey = Model.notifyKey(prayer.id, "adhan", dayKey)
+        if (copy2[adhanKey]) continue
         copy2[adhanKey] = true
-        notifiedKeys = copy2
+        changed = true
+        var spoken = Model.prayerName(prayer.id, lang, prayer.date)
         remind(
-          lang === "ar" ? ("حان وقت " + nextNameAr) : ("Time for " + nextNameEn),
-          locationLabel + " · " + nextTime,
-          nextGlyph
+          lang === "ar" ? ("حان وقت " + spoken) : ("Time for " + spoken),
+          locationLabel + " · " + Model.formatClock(prayer.date, true),
+          Model.prayerGlyph(prayer.id)
         )
+      }
+      if (changed) {
+        notifiedKeys = copy2
         scheduleSave()
       }
     }
@@ -602,7 +618,8 @@ Item {
         source: root.source,
         offsetMinutes: root.offsetMinutes,
         habousCityId: root.habousCityId,
-        habousCityName: root.habousCityName
+        habousCityName: root.habousCityName,
+        qibla: root.qiblaLabel
       })
     }
 
