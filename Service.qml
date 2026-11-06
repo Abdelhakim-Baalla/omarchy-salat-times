@@ -42,6 +42,7 @@ Item {
   property real longitude: -9.59815
   property string source: "offline"   // "habous" | "aladhan" | "offline"
   property bool fetching: false
+  property int requestGeneration: 0
   property var habousCities: []
   readonly property var habousCityOptions: {
     var out = []
@@ -184,6 +185,8 @@ Item {
 
   function recompute() {
     if (!loaded) return
+    // Ignore collector/exit callbacks from canceled requests.
+    requestGeneration += 1
     // Cancel obsolete requests before changing location/method/date.
     habousFetch.running = false
     todayFetch.running = false
@@ -205,6 +208,7 @@ Item {
     if (!onlineEnabled || fetching) return
     fetching = true
     if (useHabous) {
+      habousFetch.generation = requestGeneration
       habousFetch.fellBack = false
       habousFetch.command = [
         "curl", "-fsS", "--max-time", "12", "--max-filesize", "1048576", "-A", "Mozilla/5.0",
@@ -219,6 +223,7 @@ Item {
   function fetchAladhan() {
     if (!onlineEnabled) { fetching = false; recomputeOffline(); return }
     var now = new Date(_now)
+    todayFetch.generation = requestGeneration
     todayFetch.command = [
       "curl", "-fsS", "--max-time", "8", "--max-filesize", "262144",
       Model.aladhanUrl(latitude, longitude, method, madhab, offsetMinutes, now, desktopTimezone)
@@ -228,16 +233,17 @@ Item {
 
   Process {
     id: habousFetch
+    property int generation: -1
     property bool fellBack: false
     function fallBack() {
-      if (fellBack || !root.onlineEnabled) return
+      if (fellBack || !root.onlineEnabled || generation !== root.requestGeneration) return
       fellBack = true
       root.fetchAladhan()
     }
     command: ["true"]
     stdout: StdioCollector {
       onStreamFinished: {
-        if (!root.onlineEnabled) return
+        if (!root.onlineEnabled || habousFetch.generation !== root.requestGeneration) return
         var today = new Date(root._now)
         var parsed = Model.schedulesFromHabous(text, today, root.offsetMinutes)
         if (parsed && parsed.today && parsed.today.length) {
@@ -255,21 +261,24 @@ Item {
       }
     }
     onExited: function(code) {
+      if (habousFetch.generation !== root.requestGeneration) return
       if (code !== 0) habousFetch.fallBack()
     }
   }
 
   Process {
     id: todayFetch
+    property int generation: -1
     command: ["true"]
     stdout: StdioCollector {
       onStreamFinished: {
-        if (!root.onlineEnabled) return
+        if (!root.onlineEnabled || todayFetch.generation !== root.requestGeneration) return
         var today = new Date(root._now)
         var sched = Model.scheduleFromAladhan(text, today)
         if (sched) {
           root._pendingToday = sched
           var tom = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)
+          tomorrowFetch.generation = root.requestGeneration
           tomorrowFetch.command = [
             "curl", "-fsS", "--max-time", "8", "--max-filesize", "262144",
             Model.aladhanUrl(root.latitude, root.longitude, root.method, root.madhab, root.offsetMinutes, tom, root.desktopTimezone)
@@ -283,7 +292,8 @@ Item {
       }
     }
     onExited: function(code) {
-      if (!root.onlineEnabled) return
+      if (todayFetch.generation !== root.requestGeneration) return
+      if (!root.onlineEnabled || todayFetch.generation !== root.requestGeneration) return
       if (code !== 0) {
         root.fetching = false
         if (!root.todaySchedule.length) root.recomputeOffline()
@@ -295,10 +305,11 @@ Item {
 
   Process {
     id: tomorrowFetch
+    property int generation: -1
     command: ["true"]
     stdout: StdioCollector {
       onStreamFinished: {
-        if (!root.onlineEnabled) return
+        if (!root.onlineEnabled || tomorrowFetch.generation !== root.requestGeneration) return
         var today = new Date(root._now)
         var tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)
         var tom = Model.scheduleFromAladhan(text, tomorrow)
@@ -317,7 +328,8 @@ Item {
       }
     }
     onExited: function(code) {
-      if (!root.onlineEnabled) return
+      if (tomorrowFetch.generation !== root.requestGeneration) return
+      if (!root.onlineEnabled || tomorrowFetch.generation !== root.requestGeneration) return
       if (code !== 0) {
         root.fetching = false
         if (root._pendingToday && root._pendingToday.length) {
@@ -590,6 +602,7 @@ Item {
 
   onOnlineEnabledChanged: {
     if (!loaded) return
+    requestGeneration += 1
     habousFetch.running = false
     todayFetch.running = false
     tomorrowFetch.running = false
