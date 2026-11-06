@@ -142,6 +142,7 @@ function scheduleFromAladhan(raw, baseDate) {
       if (isNaN(when.getTime())) return null
       schedule.push({ id: id, date: when, hours: hm.h + hm.min / 60, source: "aladhan" })
     }
+    schedule.sort(function(a, b) { return a.date.getTime() - b.date.getTime() })
     return schedule
   } catch (e) {
     return null
@@ -512,6 +513,8 @@ function daySchedule(date, lat, lng, methodId, madhab, offsetMinutes) {
       offsetMinutes: off
     })
   }
+  // A remote location can place Isha before Fajr on the desktop civil day.
+  schedule.sort(function(a, b) { return a.date.getTime() - b.date.getTime() })
   return schedule
 }
 

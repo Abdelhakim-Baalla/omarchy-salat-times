@@ -1,0 +1,20 @@
+name: Model regression checks
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  model:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        timezone: [Africa/Casablanca, America/New_York, Asia/Tokyo, Pacific/Auckland]
+    env:
+      TZ: ${{ matrix.timezone }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tests/model.test.cjs

@@ -67,7 +67,10 @@ BarWidget {
   IpcHandler {
     target: "abdelhakim.salat.widget"
 
-    function open(): void { root.open() }
+    function open(): void {
+      if (panelLoader.item) panelLoader.item.settingsOpen = false
+      root.open()
+    }
     function close(): void { root.close() }
     function toggle(): void { root.togglePanel() }
     function settings(): void {

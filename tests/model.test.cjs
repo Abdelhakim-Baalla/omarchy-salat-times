@@ -47,3 +47,11 @@ assert.equal(run("parseLocationFile('{\"latitude\":91,\"longitude\":0}').latitud
 const remote = JSON.stringify({data:{timings:Object.fromEntries(['Fajr','Sunrise','Dhuhr','Asr','Maghrib','Isha'].map(k=>[k,'2026-11-06T12:00:00+09:00']))}});
 assert.equal(run(`scheduleFromAladhan(${JSON.stringify(remote)},new Date(2026,10,6))[0].date.getTime()`), Date.parse('2026-11-06T03:00:00Z'));
 console.log('Passed: Hijri known dates and adjustment, invalid clocks, weather coordinate bounds, timezone-aware API timestamps.');
+assert.equal(run(`parseGeocodingResults(JSON.stringify({results:[{name:'Null Island',latitude:null,longitude:null}]})).length`), 0);
+assert.equal(run(`parseGeocodingResults(JSON.stringify({results:[{name:'Tokyo',latitude:35.68,longitude:139.69,country_code:'JP',timezone:'Asia/Tokyo'}]}))[0].countryCode`), 'JP');
+for (let i = 0; i < 1500; i++) {
+  const date = new Date(2023, 0, 1 + i);
+  const h = context.gregorianToHijri(date);
+  assert.ok(h.day >= 1 && h.day <= 30 && h.month >= 1 && h.month <= 12, `Invalid Hijri date on ${date}`);
+}
+console.log('Passed: null coordinate rejection, international country metadata and 1,500 consecutive Hijri dates.');
