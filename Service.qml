@@ -441,7 +441,7 @@ Item {
   function cycleMethod() {
     var ids = Model.methodIds()
     var i = ids.indexOf(method)
-    method = ids[(i + 1) % ids.length]
+    setMethod(ids[(i + 1) % ids.length])
   }
 
   function setLocation(name, lat, lng, country) {
