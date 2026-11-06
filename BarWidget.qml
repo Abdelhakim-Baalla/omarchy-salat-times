@@ -79,9 +79,8 @@ BarWidget {
     }
     function country(code: string): void {
       if (!panelLoader.item || !/^[A-Z]{2}$/.test(code)) return
-      panelLoader.item.countryFilter = code
-      panelLoader.item.settingsOpen = true
       root.open()
+      panelLoader.item.showCityOptions(code)
     }
   }
 

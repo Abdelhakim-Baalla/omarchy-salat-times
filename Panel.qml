@@ -81,6 +81,12 @@ Ui.Panel {
     return false
   }
 
+  function showCityOptions(code) {
+    countryFilter = code
+    settingsOpen = true
+    Qt.callLater(function() { cityPresetDropdown.open() })
+  }
+
   function startEditLocation() {
     if (!salat) return
     editingLocation = true
