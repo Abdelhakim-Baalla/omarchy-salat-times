@@ -819,7 +819,7 @@ Item {
           PlainLabel {
             anchors.centerIn: parent
             text: root.overlayGlyph
-            font.family: root.lang === "ar" ? "Noto Sans Arabic" : "Noto Sans"
+            font.family: root.lang === "ar" ? "Noto Sans Arabic" : Style.font.family
             font.pixelSize: 48
             color: Color.menu.text
           }
@@ -829,7 +829,7 @@ Item {
           width: parent.width
           horizontalAlignment: Text.AlignHCenter
           text: root.overlayTitle
-          font.family: root.lang === "ar" ? "Noto Sans Arabic" : "Noto Sans"
+          font.family: root.lang === "ar" ? "Noto Sans Arabic" : Style.font.family
           font.pixelSize: Style.font.heading
           font.bold: true
           color: Color.menu.text
@@ -840,7 +840,7 @@ Item {
           width: parent.width
           horizontalAlignment: Text.AlignHCenter
           text: root.overlayBody
-          font.family: root.lang === "ar" ? "Noto Sans Arabic" : "Noto Sans"
+          font.family: root.lang === "ar" ? "Noto Sans Arabic" : Style.font.family
           font.pixelSize: Style.font.body
           color: Qt.darker(Color.menu.text, 1.4)
           wrapMode: Text.WordWrap
