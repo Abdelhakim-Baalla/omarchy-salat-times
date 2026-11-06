@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "id": "abdelhakim.salat",
   "name": "Salat Times",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "author": "abdelhakim",
-  "description": "Worldwide prayer times for Omarchy: Noor emerald theme, Arabic typography, 249-country setup, offline cities, adhan, Hijri calendar and Qibla.",
+  "description": "Worldwide prayer times for Omarchy: system-themed timeline, 249-country location search, offline calculation, adhan reminders, Hijri calendar and Qibla.",
   "kinds": [
     "service",
     "bar-widget"
@@ -16,7 +16,7 @@
   },
   "barWidget": {
     "displayName": "Salat Times",
-    "description": "A ring-free prayer timetable with Arabic typography, 249-country search and offline city presets",
+    "description": "Prayer timeline with Arabic and English, live system colors, worldwide locations and focused settings",
     "category": "Time",
     "allowMultiple": false,
     "defaultSection": "center"

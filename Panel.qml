@@ -7,7 +7,7 @@ import qs.Ui
 import qs.Ui as Ui
 import "Model.js" as Model
 
-// Salat panel — one composition: header → hero → timeline → settings drawer.
+// Native prayer timeline with focused location, calculation and reminder views.
 Ui.Panel {
   id: root
   moduleName: "abdelhakim.salat"
@@ -20,49 +20,59 @@ Ui.Panel {
 
   readonly property var salat: bar ? (bar.shell ? bar.shell.serviceFor("abdelhakim.salat") : null) : null
 
-  readonly property bool noor: !salat || salat.appearance !== "system"
-  readonly property color panelBackground: noor ? "#102D27" : Color.popups.background
-  readonly property color contentForeground: noor ? "#F5EFDF" : (bar ? bar.foreground : Color.foreground)
-  readonly property string contentFontFamily: arabic ? "Noto Sans Arabic" : "Noto Sans"
-  readonly property string headingFontFamily: arabic ? "Noto Kufi Arabic" : "Noto Sans"
-  readonly property string numericFontFamily: "Noto Sans"
-  readonly property color accent: noor ? "#E3C68C" : Color.accent
+  readonly property color panelBackground: Color.popups.background
+  readonly property color contentForeground: bar ? bar.foreground : Color.foreground
+  readonly property string systemFontFamily: bar ? bar.fontFamily : Style.font.family
+  readonly property string contentFontFamily: arabic ? "Noto Sans Arabic" : systemFontFamily
+  readonly property string headingFontFamily: arabic ? "Noto Kufi Arabic" : systemFontFamily
+  readonly property string numericFontFamily: systemFontFamily
+  readonly property color accent: Color.accent
   readonly property color muted: Qt.rgba(root.contentForeground.r, root.contentForeground.g, root.contentForeground.b, 0.76)
   readonly property int readingAlignment: arabic ? Text.AlignRight : Text.AlignLeft
   readonly property bool arabic: salat ? salat.lang === "ar" : true
 
-  readonly property string heroName: salat ? salat.nextName : "—"
-  readonly property string heroSub: salat
-    ? (arabic ? salat.nextNameEn : salat.nextNameAr)
-    : ""
-  readonly property string heroTime: salat ? salat.remainingLabel : "--:--"
-  readonly property string heroWhen: salat
-    ? (salat.nextIsTomorrow
-        ? ((arabic ? "غداً · " : "Tomorrow · ") + salat.nextTime)
-        : salat.nextTime)
-    : ""
+  readonly property var timelineRows: {
+    if (!salat) return []
+    var rows = salat.rows.slice()
+    if (salat.nextIsTomorrow && salat.nextPrayer)
+      rows.push({ name: salat.nextName, time: salat.nextTime, isNext: true, tomorrow: true })
+    return rows
+  }
+  property string settingsPage: "location"
+  property bool advancedLocation: false
+  readonly property string pageTitle: settingsPage === "location" ? (arabic ? "الموقع" : "Location")
+    : settingsPage === "reminders" ? (arabic ? "التنبيهات" : "Reminders")
+    : (arabic ? "إعدادات المواقيت" : "Prayer settings")
+
+  function openSettings(page) {
+    cancelEditLocation()
+    closeMenus()
+    settingsPage = page
+    settingsOpen = true
+    Qt.callLater(function() { scrollArea.contentItem.contentY = 0; backButton.forceActiveFocus() })
+  }
 
   property string countryFilter: salat ? salat.countryCode : ""
   property bool editingLocation: false
   property bool settingsOpen: false
   onSettingsOpenChanged: {
-    if (settingsOpen) Qt.callLater(function() { onlineToggle.forceActiveFocus() })
-    else { root.closeMenus(); keyCatcher.forceActiveFocus() }
+    if (settingsOpen) Qt.callLater(function() {
+      if (root.settingsOpen && !root.editingLocation) backButton.forceActiveFocus()
+    })
+    else { root.cancelEditLocation(); root.closeMenus(); keyCatcher.forceActiveFocus() }
   }
   property string locationDraft: ""
   property var locationSuggestions: []
   property int suggestionIndex: 0
   property string locationFeedback: ""
   property bool geocodeBusy: false
+  property int geocodeGeneration: 0
+  property var geocodeProcess: null
 
   readonly property var methodOptions: Model.methodOptions()
   readonly property var madhabOptions: arabic
     ? [{ value: "Standard", label: "شافعي" }, { value: "Hanafi", label: "حنفي" }]
     : [{ value: "Standard", label: "Shafi" }, { value: "Hanafi", label: "Hanafi" }]
-  readonly property var langOptions: [
-    { value: "ar", label: "العربية" },
-    { value: "en", label: "English" }
-  ]
   readonly property var reminderOptions: arabic
     ? [
         { value: "notification", label: "إشعار" },
@@ -87,16 +97,17 @@ Ui.Panel {
     habousCityDropdown.close()
     methodDropdown.close()
   }
-  onOpenedChanged: if (!opened) closeMenus()
+  onOpenedChanged: if (!opened) { cancelEditLocation(); closeMenus() }
 
   function showCityOptions(code) {
+    openSettings("location")
     countryFilter = code
-    settingsOpen = true
     Qt.callLater(function() { cityPresetDropdown.open() })
   }
 
   function startEditLocation() {
     if (!salat) return
+    settingsPage = "location"
     editingLocation = true
     settingsOpen = true
     locationDraft = ""
@@ -104,31 +115,38 @@ Ui.Panel {
     suggestionIndex = 0
   }
 
-  function cancelEditLocation() {
+  function cancelGeocode() {
     geocodeTimer.stop()
-    geocodeProc.running = false
+    geocodeGeneration++
+    if (geocodeProcess) {
+      geocodeProcess.running = false
+      geocodeProcess = null
+    }
     geocodeBusy = false
+  }
+
+  function cancelEditLocation() {
+    var restoreFocus = editingLocation
+    cancelGeocode()
     locationFeedback = ""
     editingLocation = false
     locationDraft = ""
     locationSuggestions = []
+    if (restoreFocus) Qt.callLater(function() {
+      if (root.opened && root.settingsOpen && !root.editingLocation) backButton.forceActiveFocus()
+    })
   }
 
   function commitLocation() {
     if (!salat) return
     var name = String(locationDraft || "").replace(/^\s+|\s+$/g, "")
-    if (name === "" && locationSuggestions.length === 0) {
-      salat.adoptWeatherLocation()
-      cancelEditLocation()
-      return
-    }
     var choice = locationSuggestions.length
       ? locationSuggestions[Math.max(0, Math.min(suggestionIndex, locationSuggestions.length - 1))]
       : null
     if (choice) {
       salat.setLocation(choice.name + (choice.countryName ? ", " + choice.countryName : ""), choice.latitude, choice.longitude, choice.countryCode)
-    } else if (name !== "") {
-      requestGeocode(name)
+    } else {
+      if (name.length >= 2) requestGeocode(name)
       return
     }
     cancelEditLocation()
@@ -136,15 +154,12 @@ Ui.Panel {
 
   function requestGeocode(q) {
     var query = String(q || "").replace(/^\s+|\s+$/g, "")
-    if (query.length < 2) {
-      locationSuggestions = []
-      return
-    }
-    geocodeTimer.stop()
-    geocodeProc.running = false
+    cancelGeocode()
     locationSuggestions = []
     locationFeedback = ""
-    geocodeProc.query = query.slice(0, 160)
+    if (query.length < 2) {
+      return
+    }
     geocodeTimer.restart()
   }
 
@@ -152,29 +167,37 @@ Ui.Panel {
     id: geocodeTimer
     interval: 320
     repeat: false
-    onTriggered: { root.geocodeBusy = true; geocodeProc.running = true }
+    onTriggered: {
+      root.geocodeBusy = true
+      root.geocodeProcess = geocodeRequest.createObject(root, {
+        generation: root.geocodeGeneration,
+        url: Model.geocodingUrl(root.locationDraft.trim().slice(0, 160), root.countryFilter, root.arabic ? "ar" : "en")
+      })
+      root.geocodeProcess.running = true
+    }
   }
 
-  Process {
-    id: geocodeProc
-    onExited: function(code) {
-      root.geocodeBusy = false
-      if (code !== 0 && root.editingLocation)
-        root.locationFeedback = root.arabic ? "تعذر الاتصال. أعد المحاولة." : "Could not connect. Please try again."
-    }
-    property string query: ""
-    command: [
-      "curl", "-fsS", "--max-time", "6", "--max-filesize", "262144",
-      Model.geocodingUrl(query, root.countryFilter, root.arabic ? "ar" : "en")
-    ]
-    stdout: StdioCollector {
-      onStreamFinished: {
-        root.geocodeBusy = false
-        if (!root.editingLocation) return
-        root.locationSuggestions = Model.parseGeocodingResults(text)
-        root.locationFeedback = root.locationSuggestions.length ? ""
-          : (root.arabic ? "لا توجد نتائج. جرّب المدينة، البلد." : "No matches. Try city, country.")
-        root.suggestionIndex = 0
+  // Each response keeps its own generation, including after cancellation.
+  Component {
+    id: geocodeRequest
+    Process {
+      id: request
+      required property int generation
+      required property string url
+      property string response: ""
+      command: ["curl", "-fsS", "--max-time", "6", "--max-filesize", "262144", url]
+      stdout: StdioCollector { onStreamFinished: request.response = text }
+      onExited: function(code) {
+        if (generation === root.geocodeGeneration && root.editingLocation) {
+          root.geocodeBusy = false
+          root.geocodeProcess = null
+          root.locationSuggestions = code === 0 ? Model.parseGeocodingResults(response) : []
+          root.locationFeedback = code !== 0
+            ? (root.arabic ? "تعذر الاتصال. أعد المحاولة." : "Could not connect. Please try again.")
+            : (root.locationSuggestions.length ? "" : (root.arabic ? "لا توجد نتائج. جرّب مدينة أخرى أو غيّر فلتر البلد." : "No matches. Try another city or change the country filter."))
+          root.suggestionIndex = 0
+        }
+        request.destroy()
       }
     }
   }
@@ -208,8 +231,8 @@ Ui.Panel {
       onTabRequested: function(direction) { root.switchPanel(direction) }
       onTextKey: function(t) {
         if (root.editingLocation) return
-        if (t === "e" || t === "E") root.startEditLocation()
-        else if (t === "s" || t === "S") root.settingsOpen = !root.settingsOpen
+        if (t === "e" || t === "E") root.openSettings("location")
+        else if (t === "s" || t === "S") root.openSettings("timing")
         else if (t === "m" || t === "M") { if (root.salat) root.salat.cycleMethod() }
         else if (t === "a" || t === "A") { if (root.salat) root.salat.lang = root.salat.lang === "ar" ? "en" : "ar" }
         else if (t === "b" || t === "B") { if (root.salat) root.salat.cycleBarStyle() }
@@ -245,18 +268,19 @@ Ui.Panel {
             PlainLabel {
               width: parent.width - languageButton.width - Style.space(12)
               anchors.verticalCenter: parent.verticalCenter
-              text: root.arabic ? "مواقيت الصلاة" : "Salat Times"
+              text: root.settingsOpen ? root.pageTitle : (root.salat ? root.salat.locationLabel : (root.arabic ? "مواقيت الصلاة" : "Salat Times"))
+              elide: Text.ElideRight
               horizontalAlignment: root.readingAlignment
               color: root.contentForeground
               font.family: root.headingFontFamily
-              font.pixelSize: Style.space(23)
+              font.pixelSize: Style.space(21)
               font.bold: true
             }
             Ui.Button {
               id: languageButton
               text: root.arabic ? "English" : "العربية"
               focusable: true
-              fontFamily: root.contentFontFamily
+              fontFamily: root.arabic ? root.systemFontFamily : "Noto Sans Arabic"
               foreground: root.contentForeground
               accent: root.accent
               onClicked: if (root.salat) root.salat.setLang(root.arabic ? "en" : "ar")
@@ -266,295 +290,216 @@ Ui.Panel {
           Column {
             id: overview
             width: parent.width
-            spacing: Style.space(14)
+            spacing: Style.space(12)
             visible: !root.settingsOpen
 
-          Column {
-            width: parent.width
-            spacing: Style.space(4)
-            PlainLabel {
+            Column {
               width: parent.width
-              text: root.salat ? root.salat.hijriLabel : "—"
-              horizontalAlignment: root.readingAlignment
-              color: root.contentForeground
-              font.family: root.contentFontFamily
-              font.pixelSize: root.arabic ? Math.max(Style.font.body, Style.space(15)) : Style.font.body
-            }
-            PlainLabel {
-              width: parent.width
-              text: root.salat ? root.salat.gregorianLabel : ""
-              horizontalAlignment: root.readingAlignment
-              color: root.muted
-              font.family: root.contentFontFamily
-              font.pixelSize: root.arabic ? Math.max(Style.font.bodySmall, Style.space(12)) : Style.font.bodySmall
-              wrapMode: Text.WordWrap
-            }
-            PlainLabel {
-              width: parent.width
-              text: root.salat ? root.salat.qiblaLabel : ""
-              horizontalAlignment: root.readingAlignment
-              wrapMode: Text.WordWrap
-              color: root.contentForeground
-              font.family: root.contentFontFamily
-              font.pixelSize: root.arabic ? Math.max(Style.font.bodySmall, Style.space(12)) : Style.font.bodySmall
-            }
-            Ui.Button {
-              width: parent.width
-              leftAlign: true
-              text: root.salat ? root.salat.locationLabel : (root.arabic ? "الموقع" : "Location")
-              tooltipText: root.arabic ? "تغيير الموقع" : "Change location"
-              focusable: true
-              fontFamily: root.contentFontFamily
-              foreground: root.muted
-              accent: root.accent
-              horizontalPadding: 0
-              onClicked: {
-                root.startEditLocation()
-              }
-            }
-          }
-
-          // Noor: a typographic prayer window. No clock face or ring.
-          Column {
-            width: parent.width
-            spacing: Style.space(8)
-            Rectangle {
-              width: parent.width
-              height: 1
-              color: Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.45)
-            }
-            Row {
-              width: parent.width
-              spacing: Style.space(12)
+              spacing: Style.space(4)
               PlainLabel {
-                width: parent.width - prayerStart.width - parent.spacing
-                text: root.heroName
+                width: parent.width
+                text: root.salat ? root.salat.gregorianLabel : ""
                 horizontalAlignment: root.readingAlignment
-                color: root.accent
-                font.family: root.headingFontFamily
-                font.pixelSize: Style.space(30)
-                font.weight: Font.DemiBold
-                elide: Text.ElideRight
+                color: root.contentForeground
+                font.family: root.contentFontFamily
+                font.pixelSize: Style.font.bodySmall
+                wrapMode: Text.WordWrap
               }
               PlainLabel {
-                id: prayerStart
-                anchors.verticalCenter: parent.verticalCenter
-                text: root.salat ? root.salat.nextTime : "--:--"
-                color: root.accent
-                font.family: root.numericFontFamily
-                font.pixelSize: Style.space(22)
+                width: parent.width
+                text: root.salat ? root.salat.hijriLabel : ""
+                horizontalAlignment: root.readingAlignment
+                color: root.muted
+                font.family: root.contentFontFamily
+                font.pixelSize: Style.font.bodySmall
+                wrapMode: Text.WordWrap
               }
             }
-            PlainLabel {
+            Rectangle { width: parent.width; height: 1; color: Qt.alpha(root.accent, 0.45) }
+
+            Column {
+              id: timeline
               width: parent.width
-              text: root.heroTime
-              horizontalAlignment: Text.AlignHCenter
-              color: root.contentForeground
-              font.family: root.numericFontFamily
-              font.pixelSize: Style.space(62)
-              font.weight: Font.Light
-              fontSizeMode: Text.HorizontalFit
-              minimumPixelSize: Style.space(34)
-            }
-            PlainLabel {
-              width: parent.width
-              text: (root.arabic ? "متبقي على الصلاة" : "Until the next prayer")
-                + (root.salat && root.salat.nextIsTomorrow ? (root.arabic ? " · غداً" : " · tomorrow") : "")
-              horizontalAlignment: Text.AlignHCenter
-              color: root.muted
-              font.family: root.contentFontFamily
-              font.pixelSize: Style.space(13)
-            }
-            Item { width: 1; height: Style.space(8) }
-          }
-
-          PlainLabel {
-            width: parent.width
-            visible: root.salat && root.salat.fastingHint !== ""
-            text: root.salat ? root.salat.fastingHint : ""
-            horizontalAlignment: root.readingAlignment
-            color: root.accent
-            font.family: root.contentFontFamily
-            font.pixelSize: root.arabic ? Math.max(Style.font.body, Style.space(15)) : Style.font.body
-            wrapMode: Text.WordWrap
-          }
-
-          Row {
-            width: parent.width
-            spacing: Style.space(8)
-            PlainLabel {
-              width: parent.width - sourceLabel.width - Style.space(8)
-              text: root.arabic ? "مواقيت اليوم" : "Today’s prayers"
-              horizontalAlignment: root.readingAlignment
-              color: root.contentForeground
-              font.family: root.contentFontFamily
-              font.pixelSize: root.arabic ? Math.max(Style.font.body, Style.space(15)) : Style.font.body
-              font.bold: true
-            }
-            PlainLabel {
-              id: sourceLabel
-              text: !root.salat ? "" : root.salat.fetching
-                ? (root.arabic ? "جارٍ التحديث" : "Updating")
-                : root.salat.source === "habous" ? (root.arabic ? "حبوس" : "Habous")
-                : root.salat.source === "aladhan" ? "AlAdhan"
-                : (root.arabic ? "حساب محلي" : "Offline calculation")
-              color: root.muted
-              font.family: root.contentFontFamily
-              font.pixelSize: root.arabic ? Math.max(Style.font.bodySmall, Style.space(12)) : Style.font.bodySmall
-            }
-          }
-
-          Column {
-            id: timeline
-            width: parent.width
-            spacing: Style.space(2)
-            Repeater {
-              model: root.salat ? root.salat.rows : []
-              delegate: Rectangle {
-                required property var modelData
-                required property int index
-                readonly property bool isNext: modelData.isNext === true
-                readonly property bool isNow: modelData.isNow === true
-                readonly property bool isPassed: modelData.passed === true
-                readonly property color rowColor: isNext
-                  ? root.accent
-                  : (isPassed ? root.muted : root.contentForeground)
-                width: timeline.width
-                height: Style.space(isNext ? 50 : 40)
-                radius: Style.cornerRadius
-                color: isNext
-                  ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, root.salat && root.salat.imminent ? 0.22 : 0.12)
-                  : "transparent"
-                Row {
-                  anchors.fill: parent
-                  anchors.leftMargin: Style.space(12)
-                  anchors.rightMargin: Style.space(12)
-                  spacing: Style.space(10)
-                  PlainLabel {
-                    width: parent.width - prayerTime.width - rowState.width - Style.space(20)
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: modelData.name
-                    horizontalAlignment: root.readingAlignment
-                    color: rowColor
-                    font.family: root.contentFontFamily
-                    font.pixelSize: root.arabic ? Math.max(Style.font.body, Style.space(15)) : Style.font.body
-                    font.bold: isNext || isNow
-                    elide: Text.ElideRight
+              Repeater {
+                model: root.timelineRows
+                delegate: Item {
+                  id: prayerRow
+                  required property var modelData
+                  required property int index
+                  readonly property bool isNext: modelData.isNext === true
+                  readonly property color rowColor: isNext ? root.accent : (modelData.passed ? root.muted : root.contentForeground)
+                  width: timeline.width
+                  height: Style.space(isNext ? 66 : 42)
+                  Rectangle {
+                    x: root.arabic ? parent.width - Style.space(8) : Style.space(8)
+                    y: index === 0 ? parent.height / 2 : 0
+                    width: 1
+                    height: index === 0 || index === root.timelineRows.length - 1 ? parent.height / 2 : parent.height
+                    color: Qt.alpha(root.accent, 0.4)
                   }
-                  PlainLabel {
-                    id: rowState
-                    width: Style.space(64)
+                  Rectangle {
+                    width: Style.space(prayerRow.isNext ? 8 : 5)
+                    height: width
+                    radius: 1
+                    x: (root.arabic ? parent.width - Style.space(8) : Style.space(8)) - width / 2
                     anchors.verticalCenter: parent.verticalCenter
-                    text: modelData.statusLabel || ""
-                    horizontalAlignment: Text.AlignHCenter
-                    color: isNext ? root.accent : root.muted
-                    font.family: root.contentFontFamily
-                    font.pixelSize: root.arabic ? Math.max(Style.font.bodySmall, Style.space(12)) : Style.font.bodySmall
-                    elide: Text.ElideRight
+                    color: prayerRow.rowColor
                   }
-                  PlainLabel {
-                    id: prayerTime
-                    width: Style.space(56)
+                  Rectangle {
+                    x: root.arabic ? 0 : Style.space(22)
+                    width: parent.width - Style.space(22)
+                    height: parent.height - Style.space(4)
                     anchors.verticalCenter: parent.verticalCenter
-                    horizontalAlignment: Text.AlignRight
-                    text: modelData.time
-                    color: rowColor
-                    font.family: root.numericFontFamily
-                    font.pixelSize: root.arabic ? Math.max(Style.font.body, Style.space(15)) : Style.font.body
-                    font.bold: isNext || isNow
-                    LayoutMirroring.enabled: false
+                    radius: Style.cornerRadius
+                    color: prayerRow.isNext ? Qt.alpha(root.accent, 0.12) : "transparent"
+                    Row {
+                      anchors.fill: parent
+                      anchors.margins: Style.space(10)
+                      spacing: Style.space(8)
+                      Column {
+                        width: parent.width - prayerTime.width - parent.spacing
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: Style.space(3)
+                        PlainLabel {
+                          width: parent.width
+                          text: modelData.name + (modelData.tomorrow ? (root.arabic ? " · غداً" : " · tomorrow") : "")
+                          horizontalAlignment: root.readingAlignment
+                          color: prayerRow.rowColor
+                          font.family: root.contentFontFamily
+                          font.pixelSize: root.arabic ? Math.max(Style.font.body, Style.space(15)) : Style.font.body
+                          font.bold: prayerRow.isNext || modelData.isNow === true
+                          elide: Text.ElideRight
+                        }
+                        PlainLabel {
+                          width: parent.width
+                          visible: prayerRow.isNext
+                          text: root.salat ? (root.arabic ? "بعد " : "In ") + root.salat.remainingLabel : ""
+                          horizontalAlignment: root.readingAlignment
+                          color: root.contentForeground
+                          font.family: root.contentFontFamily
+                          font.pixelSize: Style.font.bodySmall
+                        }
+                      }
+                      PlainLabel {
+                        id: prayerTime
+                        width: Style.space(63)
+                        anchors.verticalCenter: parent.verticalCenter
+                        horizontalAlignment: Text.AlignRight
+                        text: modelData.time
+                        color: prayerRow.rowColor
+                        font.family: root.numericFontFamily
+                        font.pixelSize: Style.space(prayerRow.isNext ? 18 : 16)
+                        font.bold: prayerRow.isNext
+                        LayoutMirroring.enabled: false
+                      }
+                    }
                   }
                 }
               }
+              PlainLabel {
+                width: parent.width
+                visible: root.timelineRows.length === 0
+                text: root.arabic ? "جارٍ إعداد المواقيت…" : "Preparing prayer times…"
+                color: root.muted
+                font.family: root.contentFontFamily
+                font.pixelSize: Style.font.body
+              }
             }
             PlainLabel {
               width: parent.width
-              visible: !root.salat || root.salat.rows.length === 0
-              text: root.arabic ? "جارٍ إعداد مواقيت اليوم…" : "Preparing today’s prayer times…"
-              color: root.muted
+              visible: root.salat && root.salat.fastingHint !== ""
+              text: root.salat ? root.salat.fastingHint : ""
+              horizontalAlignment: root.readingAlignment
+              color: root.accent
               font.family: root.contentFontFamily
-              font.pixelSize: root.arabic ? Math.max(Style.font.body, Style.space(15)) : Style.font.body
+              font.pixelSize: Style.font.bodySmall
               wrapMode: Text.WordWrap
             }
-          }
-
-          PlainLabel {
-            width: parent.width
-            visible: root.salat && root.salat.refreshError !== ""
-            text: root.salat ? root.salat.refreshError : ""
-            color: root.muted
-            font.family: root.contentFontFamily
-            font.pixelSize: Style.font.bodySmall
-            wrapMode: Text.WordWrap
-          }
-          Ui.Button {
-            width: parent.width
-            text: root.salat && root.salat.fetching ? (root.arabic ? "جارٍ التحديث…" : "Refreshing…")
-              : (root.arabic ? "تحديث المواقيت" : "Refresh prayer times")
-            enabled: root.salat && root.salat.onlineEnabled && !root.salat.fetching
-            focusable: true
-            foreground: root.muted
-            accent: root.accent
-            fontFamily: root.contentFontFamily
-            onClicked: if (root.salat) root.salat.fetchOnline()
-          }
-
+            Rectangle { width: parent.width; height: 1; color: Qt.alpha(root.accent, 0.45) }
+            Row {
+              width: parent.width
+              spacing: Style.space(8)
+              PlainLabel {
+                width: parent.width - refreshButton.width - parent.spacing
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.salat ? root.salat.qiblaLabel : ""
+                horizontalAlignment: root.readingAlignment
+                color: root.contentForeground
+                font.family: root.contentFontFamily
+                font.pixelSize: Style.font.bodySmall
+                wrapMode: Text.WordWrap
+              }
+              Ui.Button {
+                id: refreshButton
+                text: root.salat && root.salat.fetching ? (root.arabic ? "تحديث…" : "Updating…")
+                  : root.salat && root.salat.source === "habous" ? "Habous · " + (root.arabic ? "تحديث" : "Refresh")
+                  : root.salat && root.salat.source === "aladhan" ? "AlAdhan · " + (root.arabic ? "تحديث" : "Refresh")
+                  : (root.arabic ? "حساب محلي · تحديث" : "Offline · Refresh")
+                tooltipText: root.arabic ? "تحديث المواقيت" : "Refresh prayer times"
+                enabled: root.salat && root.salat.onlineEnabled && !root.salat.fetching
+                focusable: true
+                foreground: root.muted
+                accent: root.accent
+                fontFamily: root.contentFontFamily
+                onClicked: if (root.salat) root.salat.fetchOnline()
+              }
+            }
+            PlainLabel {
+              width: parent.width
+              visible: root.salat && root.salat.refreshError !== ""
+              text: root.salat ? root.salat.refreshError : ""
+              color: root.muted
+              font.family: root.contentFontFamily
+              font.pixelSize: Style.font.bodySmall
+              wrapMode: Text.WordWrap
+            }
+            Row {
+              width: parent.width
+              spacing: Style.space(6)
+              Repeater {
+                model: [
+                  { page: "location", title: root.arabic ? "الموقع" : "Location" },
+                  { page: "reminders", title: root.arabic ? "التنبيهات" : "Reminders" },
+                  { page: "timing", title: root.arabic ? "الإعدادات" : "Settings" }
+                ]
+                delegate: Ui.Button {
+                  required property var modelData
+                  width: (overview.width - Style.space(12)) / 3
+                  text: modelData.title
+                  focusable: true
+                  foreground: root.contentForeground
+                  accent: root.accent
+                  fontFamily: root.contentFontFamily
+                  onClicked: root.openSettings(modelData.page)
+                }
+              }
+            }
           } // overview
 
-          // ============================================================ SETTINGS DRAWER
-          // Collapsed by default — keeps the first view about the day, not knobs.
           Ui.Button {
+            id: backButton
             width: parent.width
-            text: root.settingsOpen
-              ? (root.arabic ? "إغلاق الإعدادات" : "Close settings")
-              : (root.arabic ? "الإعدادات" : "Settings")
-            selected: root.settingsOpen
+            visible: root.settingsOpen
+            text: root.arabic ? "العودة إلى المواقيت" : "Back to timetable"
             focusable: true
             foreground: root.contentForeground
             accent: root.accent
             fontFamily: root.contentFontFamily
-            onClicked: root.settingsOpen = !root.settingsOpen
+            onClicked: root.settingsOpen = false
           }
 
           Column {
             width: parent.width
             spacing: Style.space(12)
-            visible: root.settingsOpen
-            height: visible ? implicitHeight : 0
-            clip: true
-            opacity: visible ? 1 : 0
-            Behavior on opacity { NumberAnimation { duration: Style.duration(160); easing.type: Easing.OutCubic } }
-
-            Toggle {
-              id: onlineToggle
+            visible: root.settingsOpen && root.settingsPage === "location"
+            PlainLabel {
               width: parent.width
-              label: root.arabic ? "تحديث المواقيت عبر الإنترنت" : "Online prayer tables"
-              description: root.arabic ? "تحديث كل ساعة؛ أوقفه لاستخدام الحساب المحلي" : "Refresh hourly; turn off to use offline calculation"
-              checked: root.salat ? root.salat.onlineEnabled : true
-              foreground: root.contentForeground
-              accent: root.accent
-              fontFamily: root.contentFontFamily
-              onClicked: if (root.salat) root.salat.onlineEnabled = !root.salat.onlineEnabled
+              text: (root.arabic ? "الموقع الحالي: " : "Current: ") + (root.salat ? root.salat.locationLabel : "")
+              color: root.muted
+              font.family: root.contentFontFamily
+              font.pixelSize: Style.font.bodySmall
+              wrapMode: Text.WordWrap
             }
-
-            PanelSectionHeader {
-              text: root.arabic ? "المظهر" : "Appearance"
-              foreground: root.contentForeground
-              fontFamily: root.contentFontFamily
-            }
-            ButtonGroup {
-              width: parent.width
-              options: [
-                {value: "noor", label: root.arabic ? "نور · زمردي" : "Noor · Emerald"},
-                {value: "system", label: root.arabic ? "ألوان النظام" : "System colors"}
-              ]
-              value: root.salat ? root.salat.appearance : "noor"
-              foreground: root.contentForeground
-              accent: root.accent
-              fontFamily: root.contentFontFamily
-              onChanged: function(v) { if (root.salat) root.salat.appearance = v }
-            }
-
             // ---- Worldwide setup
             PanelSectionHeader {
               text: root.arabic ? "اختر موقعك حول العالم" : "Your location · worldwide"
@@ -566,7 +511,7 @@ Ui.Panel {
               background: root.panelBackground
               popupBorder: root.accent
               width: parent.width
-              label: root.arabic ? "البلد" : "Country"
+              label: root.arabic ? "فلتر البلد" : "Country filter"
               placeholderText: root.arabic ? "السعودية، مصر، أمريكا…" : "Saudi Arabia, Egypt, USA…"
               options: Model.countryOptions(root.salat ? root.salat.countries : [], root.arabic ? "ar" : "en")
               value: root.countryFilter
@@ -584,7 +529,7 @@ Ui.Panel {
               background: root.panelBackground
               popupBorder: root.accent
               width: parent.width
-              label: root.arabic ? "مدن جاهزة · تعمل دون إنترنت" : "Quick cities · available offline"
+              label: root.arabic ? "مدن جاهزة · دون إنترنت" : "Offline city presets"
               placeholderText: root.arabic ? "اختر مدينة أو ابحث أدناه" : "Choose a city or search below"
               options: Model.cityPresetOptions(root.salat ? root.salat.cityPresets : [], root.countryFilter, root.arabic ? "ar" : "en")
               value: ""
@@ -593,32 +538,19 @@ Ui.Panel {
               fontFamily: root.contentFontFamily
               onChanged: function(v) { if (root.salat) root.salat.selectCityPreset(v) }
             }
-            Toggle {
-              width: parent.width
-              label: root.arabic ? "اقتراح طريقة الحساب حسب البلد" : "Suggest method for this country"
-              description: root.arabic ? "يمكنك اختيار طريقة مسجدك يدوياً" : "You can override it to follow your mosque"
-              checked: root.salat ? root.salat.autoMethod : true
-              foreground: root.contentForeground
-              accent: root.accent
-              fontFamily: root.contentFontFamily
-              onClicked: {
-                if (!root.salat) return
-                root.salat.autoMethod = !root.salat.autoMethod
-                if (root.salat.autoMethod) root.salat.method = Model.methodForCountry(root.salat.countryCode)
-              }
-            }
-
             Loader {
               width: parent.width
               active: !root.editingLocation
+              visible: active
+              height: active && item ? item.implicitHeight : 0
               sourceComponent: Component {
-                Row {
+                Column {
                   width: column.width
                   spacing: Style.space(8)
 
                   Button {
                     focusable: true
-                    width: parent.width - Style.space(8) - weatherBtn.width
+                    width: parent.width
                     text: root.arabic ? "البحث عن أي مدينة…" : "Search any city…"
                     fontFamily: root.contentFontFamily
                     foreground: root.contentForeground
@@ -626,17 +558,7 @@ Ui.Panel {
                     onClicked: root.startEditLocation()
                   }
 
-                  Button {
-                    focusable: true
-                    id: weatherBtn
-                    width: Style.space(84)
-                    text: root.arabic ? "تلقائي" : "Auto"
-                    selected: root.salat ? root.salat.useWeatherLocation : true
-                    fontFamily: root.contentFontFamily
-                    foreground: root.contentForeground
-                    accent: root.accent
-                    onClicked: if (root.salat) root.salat.adoptWeatherLocation()
-                  }
+
                 }
               }
             }
@@ -644,6 +566,8 @@ Ui.Panel {
             Loader {
               width: parent.width
               active: root.editingLocation
+              visible: active
+              height: active && item ? item.implicitHeight : 0
               sourceComponent: Component {
                 Column {
                   width: column.width
@@ -700,35 +624,44 @@ Ui.Panel {
                     }
                   }
 
-                  Row {
+                  Button {
                     width: parent.width
-                    spacing: Style.space(8)
-
-                    Button {
-                      focusable: true
-                      width: (parent.width - Style.space(8)) / 2
-                      text: root.arabic ? "حفظ" : "Save"
-                      fontFamily: root.contentFontFamily
-                      foreground: root.contentForeground
-                      accent: root.accent
-                      onClicked: root.commitLocation()
-                    }
-
-                    Button {
-                      focusable: true
-                      width: (parent.width - Style.space(8)) / 2
-                      text: root.arabic ? "إلغاء" : "Cancel"
-                      fontFamily: root.contentFontFamily
-                      foreground: root.contentForeground
-                      accent: root.accent
-                      onClicked: root.cancelEditLocation()
-                    }
+                    text: root.arabic ? "إلغاء البحث" : "Cancel search"
+                    focusable: true
+                    foreground: root.contentForeground
+                    accent: root.accent
+                    fontFamily: root.contentFontFamily
+                    onClicked: root.cancelEditLocation()
                   }
+
                 }
               }
             }
 
-            // ---- Location / Habous city
+            Ui.Button {
+              width: parent.width
+              text: root.advancedLocation ? (root.arabic ? "إخفاء الخيارات الإضافية" : "Hide more options") : (root.arabic ? "خيارات موقع إضافية…" : "More location options…")
+              focusable: true
+              foreground: root.contentForeground
+              accent: root.accent
+              fontFamily: root.contentFontFamily
+              onClicked: root.advancedLocation = !root.advancedLocation
+            }
+            Column {
+              width: parent.width
+              spacing: Style.space(12)
+              visible: root.advancedLocation
+                  Button {
+                    focusable: true
+                    id: weatherBtn
+                    width: parent.width
+                    text: root.arabic ? "استخدام موقع الطقس" : "Use weather location"
+                    selected: root.salat ? root.salat.useWeatherLocation : true
+                    fontFamily: root.contentFontFamily
+                    foreground: root.contentForeground
+                    accent: root.accent
+                    onClicked: if (root.salat) root.salat.adoptWeatherLocation()
+                  }            // ---- Location / Habous city
             PanelSectionHeader {
               text: root.arabic ? "المصدر المغربي · اختياري" : "Morocco source · optional"
               visible: !root.countryFilter || root.countryFilter === "MA"
@@ -769,30 +702,6 @@ Ui.Panel {
               accent: root.accent
               fontFamily: root.contentFontFamily
               onChanged: function(v) { if (root.salat) root.salat.setHabousCity(v) }
-            }
-
-            PanelSectionHeader {
-              text: root.arabic ? "التاريخ الهجري" : "Hijri calendar"
-              foreground: root.contentForeground
-              fontFamily: root.contentFontFamily
-            }
-            PlainLabel {
-              width: parent.width
-              text: (root.salat ? root.salat.hijriLabel + "\n" : "") + (root.arabic
-                ? "تقويم حسابي؛ اضبط ± يومين لموافقة الرؤية المحلية."
-                : "Civil calendar; adjust ±2 days to match local moon sighting.")
-              color: root.muted
-              font.family: root.contentFontFamily
-              font.pixelSize: Style.font.bodySmall
-              wrapMode: Text.WordWrap
-            }
-            StepperRow {
-              value: root.salat ? root.salat.hijriAdjustment : 0
-              foreground: root.contentForeground
-              fontFamily: root.contentFontFamily
-              onStep: function(delta) {
-                if (root.salat) root.salat.hijriAdjustment = Model.clampInt(root.salat.hijriAdjustment + delta, 0, -2, 2)
-              }
             }
 
             PanelSectionHeader {
@@ -862,6 +771,41 @@ Ui.Panel {
               wrapMode: Text.WordWrap
             }
 
+
+            }
+
+          }
+          Column {
+            width: parent.width
+            spacing: Style.space(12)
+            visible: root.settingsOpen && root.settingsPage === "timing"
+            Toggle {
+              id: onlineToggle
+              width: parent.width
+              label: root.arabic ? "تحديث المواقيت عبر الإنترنت" : "Online prayer tables"
+              description: root.arabic ? "تحديث كل ساعة؛ أوقفه لاستخدام الحساب المحلي" : "Refresh hourly; turn off to use offline calculation"
+              checked: root.salat ? root.salat.onlineEnabled : true
+              foreground: root.contentForeground
+              accent: root.accent
+              fontFamily: root.contentFontFamily
+              onClicked: if (root.salat) root.salat.onlineEnabled = !root.salat.onlineEnabled
+            }
+
+            Toggle {
+              width: parent.width
+              label: root.arabic ? "اقتراح طريقة الحساب حسب البلد" : "Suggest method for this country"
+              description: root.arabic ? "يمكنك اختيار طريقة مسجدك يدوياً" : "You can override it to follow your mosque"
+              checked: root.salat ? root.salat.autoMethod : true
+              foreground: root.contentForeground
+              accent: root.accent
+              fontFamily: root.contentFontFamily
+              onClicked: {
+                if (!root.salat) return
+                root.salat.autoMethod = !root.salat.autoMethod
+                if (root.salat.autoMethod) root.salat.method = Model.methodForCountry(root.salat.countryCode)
+              }
+            }
+
             // ---- Calculation
             PanelSectionHeader {
               text: root.arabic ? "الحساب" : "Calculation"
@@ -917,7 +861,7 @@ Ui.Panel {
               background: root.panelBackground
               popupBorder: root.accent
               width: parent.width
-              label: root.arabic ? "الطريقة" : "Method"
+              label: root.arabic ? "طريقة حساب المواقيت" : "Calculation method"
               value: root.salat ? root.salat.method : "Morocco"
               options: root.methodOptions
               foreground: root.contentForeground
@@ -931,7 +875,7 @@ Ui.Panel {
               spacing: Style.space(6)
 
               PlainLabel {
-                text: root.arabic ? "المذهب (العصر)" : "Asr madhab"
+                text: root.arabic ? "حساب العصر" : "Asr calculation"
                 color: root.muted
                 font.family: root.contentFontFamily
                 font.pixelSize: Style.font.caption
@@ -949,29 +893,36 @@ Ui.Panel {
               }
             }
 
-            Column {
+            PanelSectionHeader {
+              text: root.arabic ? "التاريخ الهجري" : "Hijri calendar"
+              foreground: root.contentForeground
+              fontFamily: root.contentFontFamily
+            }
+            PlainLabel {
               width: parent.width
-              spacing: Style.space(6)
-
-              PlainLabel {
-                text: root.arabic ? "اللغة" : "Language"
-                color: root.muted
-                font.family: root.contentFontFamily
-                font.pixelSize: Style.font.caption
-                font.bold: true
-              }
-
-              ButtonGroup {
-                width: parent.width
-                options: root.langOptions
-                value: root.salat ? root.salat.lang : "ar"
-                foreground: root.contentForeground
-                accent: root.accent
-                fontFamily: root.contentFontFamily
-                onChanged: function(v) { if (root.salat) root.salat.setLang(v) }
+              text: (root.salat ? root.salat.hijriLabel + "\n" : "") + (root.arabic
+                ? "تقويم حسابي؛ اضبط ± يومين لموافقة الرؤية المحلية."
+                : "Civil calendar; adjust ±2 days to match local moon sighting.")
+              color: root.muted
+              font.family: root.contentFontFamily
+              font.pixelSize: Style.font.bodySmall
+              wrapMode: Text.WordWrap
+            }
+            StepperRow {
+              value: root.salat ? root.salat.hijriAdjustment : 0
+              foreground: root.contentForeground
+              fontFamily: root.contentFontFamily
+              onStep: function(delta) {
+                if (root.salat) root.salat.hijriAdjustment = Model.clampInt(root.salat.hijriAdjustment + delta, 0, -2, 2)
               }
             }
 
+
+          }
+          Column {
+            width: parent.width
+            spacing: Style.space(12)
+            visible: root.settingsOpen && root.settingsPage === "reminders"
             // ---- Reminders
             PanelSectionHeader {
               text: root.arabic ? "التذكير" : "Reminders"
@@ -1002,7 +953,7 @@ Ui.Panel {
 
             Toggle {
               width: parent.width
-              label: root.arabic ? "تنبيه مسبق" : "Lead reminder"
+              label: root.arabic ? "تنبيه قبل الصلاة" : "Before prayer"
               description: root.arabic
                 ? ("قبل " + (root.salat ? root.salat.notifyLeadMinutes : 10) + " دقائق")
                 : ((root.salat ? root.salat.notifyLeadMinutes : 10) + " minutes before")
@@ -1038,16 +989,7 @@ Ui.Panel {
               }
             }
 
-            PlainLabel {
-              width: parent.width
-              text: root.arabic
-                ? "S إعدادات · E موقع · M طريقة · A لغة"
-                : "S settings · E location · M method · A language"
-              color: root.muted
-              font.family: root.contentFontFamily
-              font.pixelSize: Style.font.caption
-              wrapMode: Text.WordWrap
-            }
+
           }
         }
       }

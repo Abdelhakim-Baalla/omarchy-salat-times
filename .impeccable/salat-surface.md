@@ -1,9 +1,9 @@
-# Noor Salat panel · Operate
+# Salat prayer timeline · Operate
 
 ## Direction contract
-THESIS: A prayer window expressed through typography and a clear timetable. The user explicitly rejected the ring and generic screenshot-on-mosque campaign.
-OWN-WORLD: Noor uses deep emerald #102D27, warm ivory #F5EFDF and brass gold #E3C68C. Noto Kufi Arabic headings and Noto Sans Arabic body text provide intentional Arabic typography. System colors remain optional.
-STORY: Read the next prayer, exact start and remaining time; check today’s timetable; select a country and city without a Morocco-first assumption.
-FIRST VIEWPORT: A native 400-unit panel with title/language, dates/Qibla/location, a gold hairline, next prayer and start, centered 62-unit light countdown, a short meaning label, six timetable rows and refresh/settings actions. No circular visualizations.
-FORM: Native code-led Operate interface; the user's explicit rejection of the ring governs this replacement. Campaign artwork is a sculptural mihrab cut by sunlight, with oversized emerald title on ivory. seed:768327f5ec0acea6.
+THESIS: One chronological prayer timeline, with the countdown inside the next prayer. No separate hero, ring, duplicated statuses, or giant display numbers. The user selected concept C on 6 November 2026.
+OWN-WORLD: Follow live Omarchy popup, foreground, accent and English font tokens. Preserve Noto Kufi Arabic headings and Noto Sans Arabic body text. No fixed emerald palette. Thin timeline and small square markers, flat native controls.
+STORY: Read the next prayer and its countdown in one place; scan today's schedule; open Location, Reminders or calculation Settings directly without a long combined form.
+FIRST VIEWPORT: A native 400-unit panel with location/language, compact dates, six rows with an integrated next countdown, Qibla and three actions. After Isha, append tomorrow's Fajr with an explicit tomorrow label so the day boundary is unambiguous.
+FORM: Approved generated concept artwork/concepts/ui-c-timeline.png; native QML adaptation preserves real data, keyboard navigation and RTL. The user selected thumbnail 3: blue-hour mosque skyline, artwork/concepts/thumbnail-3-blue-hour.png. Concept data is illustrative. seed: none (user-selected concept).
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance

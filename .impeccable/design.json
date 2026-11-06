@@ -1,22 +1,22 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-06T19:01:33.406611+00:00",
+  "generatedAt": "2026-11-06T20:01:43.265572+00:00",
   "title": "Design System: Salat Times",
   "extensions": {
     "platform": "Qt Quick / Quickshell / Omarchy",
-    "tokenSyntax": "Frontmatter values are normative QML expressions evaluated in Panel.qml context. Noor is default; System is optional.",
+    "tokenSyntax": "DESIGN.md frontmatter owns native QML binding tokens. Values are evaluated in Panel.qml context, not CSS; root.systemFontFamily is bar.fontFamily with Style.font.family fallback.",
     "colorMeta": {
       "background": {
         "role": "neutral",
-        "displayName": "Deep emerald / System surface"
+        "displayName": "Live Omarchy popup background"
       },
       "foreground": {
         "role": "neutral",
-        "displayName": "Warm ivory / System foreground"
+        "displayName": "Live bar foreground"
       },
       "accent": {
         "role": "primary",
-        "displayName": "Brass gold / System accent"
+        "displayName": "Live Omarchy accent"
       },
       "muted": {
         "role": "neutral",
@@ -24,7 +24,11 @@
       },
       "hairline": {
         "role": "primary",
-        "displayName": "Gold divider"
+        "displayName": "Accent separator"
+      },
+      "timeline": {
+        "role": "primary",
+        "displayName": "Quiet timeline"
       },
       "next-surface": {
         "role": "primary",
@@ -32,43 +36,78 @@
       }
     },
     "typographyMeta": {
-      "display": {
-        "purpose": "Centered remaining time; horizontal fit minimum Style.space(34)."
+      "heading": {
+        "displayName": "Location or view title",
+        "purpose": "Noto Kufi Arabic heading or live English system family."
       },
-      "prayer-name": {
-        "purpose": "Arabic Kufi heading or English Noto Sans next-prayer name."
+      "body": {
+        "displayName": "Prayer name and form body",
+        "purpose": "Noto Sans Arabic or live English system family; next/current prayer names are bold."
+      },
+      "body-small": {
+        "displayName": "Compact supporting text",
+        "purpose": "Dates, Qibla, source/refresh and integrated countdown."
+      },
+      "caption": {
+        "displayName": "Form caption",
+        "purpose": "Small native form labels and explanations."
+      },
+      "prayer-time": {
+        "displayName": "Prayer start",
+        "purpose": "Live system font, right-aligned and unmirrored in the time column."
+      },
+      "next-time": {
+        "displayName": "Next prayer start",
+        "purpose": "Modest bold emphasis within the timeline; no display hero."
       }
     },
-    "motion": [
-      {
-        "name": "settings-opacity",
-        "value": "NumberAnimation { duration: Style.duration(160); easing.type: Easing.OutCubic }",
-        "purpose": "Opacity only; visibility and height change immediately."
-      }
-    ],
     "native": {
       "surfaceOwner": "qs.Ui.KeyboardPanel",
       "controlStateOwner": "qs.Ui",
-      "previewPolicy": "Native QML references replace HTML/CSS approximations.",
-      "breakpoints": "No web breakpoints; fitted content dimensions and vertical overflow.",
-      "campaignSource": "artwork/noor-prompt.txt",
-      "campaignIntent": "Architectural mihrab cut by sunlight with oversized title on ivory; separate from product UI."
+      "previewPolicy": "Native QML sources replace HTML/CSS approximations; no HTML detector or mobile-platform audit is applicable.",
+      "layout": "Fitted 400-unit preferred content width with vertical overflow; no web breakpoints.",
+      "motion": "Focused views switch immediately. No custom settings opacity/reveal animation is defined in the current Panel.qml.",
+      "elevation": "No local timeline shadows or glow; tonal wash, hairlines and native shell framing provide structure.",
+      "scope": "Reviewed timeline popover, its focused views and bar. The separate adhan overlay in Service.qml uses Style.font.family for English and Noto Sans Arabic for Arabic; its layout was not included in the supplied view captures.",
+      "provenance": {
+        "selectedOn": "2026-11-06",
+        "uiConcept": {
+          "image": "artwork/concepts/ui-c-timeline.png",
+          "manifest": "artwork/concepts/ui-c-timeline.prompt.json",
+          "kind": "Approved generated concept C; illustrative data, not a screenshot"
+        },
+        "cover": {
+          "image": "artwork/concepts/thumbnail-3-blue-hour.png",
+          "manifest": "artwork/concepts/thumbnail-3-blue-hour.prompt.json",
+          "outputs": [
+            "marketplace.png",
+            "preview.png"
+          ],
+          "kind": "Approved generated blue-hour skyline; OpenAI built-in ImageGen; exact prompt embedded in PNGs"
+        },
+        "screenshots": {
+          "outputs": [
+            "artwork/screenshots/panel-en.png",
+            "artwork/screenshots/panel-ar.png"
+          ],
+          "kind": "Direct grim capture of running native plugin on 2026-11-06 at 1.25 display scale, cropped to popup border; provenance embedded in PNGs"
+        },
+        "reviewCaptures": [
+          ".impeccable/review/timeline-en.png",
+          ".impeccable/review/timeline-ar.png",
+          ".impeccable/review/location-en.png",
+          ".impeccable/review/reminders-en.png",
+          ".impeccable/review/timing-en.png"
+        ],
+        "comparison": "Code-led native adaptation and visual inspection; no measured concept-diff result is claimed."
+      }
     }
   },
   "components": [
     {
-      "name": "Prayer window",
-      "kind": "custom",
-      "description": "Hairline, next prayer and exact start above centered light countdown and explanatory caption.",
-      "native": {
-        "language": "qml",
-        "source": "Panel.qml"
-      }
-    },
-    {
       "name": "Prayer row",
       "kind": "custom",
-      "description": "Compact native timetable row with aligned name, status and numeric time.",
+      "description": "Chronological entry with square marker, flexible name and fixed unmirrored time column.",
       "native": {
         "language": "qml",
         "source": "Panel.qml"
@@ -78,7 +117,7 @@
     {
       "name": "Next prayer row",
       "kind": "custom",
-      "description": "Taller accent-washed row with bold name/time; fill intensifies when imminent.",
+      "description": "Taller accent row containing the countdown; an explicit tomorrow label is appended after Isha.",
       "native": {
         "language": "qml",
         "source": "Panel.qml"
@@ -86,27 +125,63 @@
       "refersTo": "prayer-row-next"
     },
     {
-      "name": "Worldwide setup",
+      "name": "Qibla and refresh",
       "kind": "custom",
-      "description": "Country and offline localized city selectors, regional method suggestion, manual override and search feedback.",
+      "description": "Flexible Qibla label beside source/refresh; busy, offline and refresh-error states.",
       "native": {
         "language": "qml",
         "source": "Panel.qml"
       }
     },
     {
-      "name": "Native settings",
+      "name": "Destination actions",
       "kind": "custom",
-      "description": "Appearance, contextual Habous, Hijri, coordinates, calculation and reminder controls.",
+      "description": "Three equal-width native buttons open Location, Reminders or Settings; focused views provide Back to timetable.",
       "native": {
         "language": "qml",
         "source": "Panel.qml"
+      }
+    },
+    {
+      "name": "Location",
+      "kind": "custom",
+      "description": "Country filter, offline city presets and city search; extra location controls are collapsed initially.",
+      "native": {
+        "language": "qml",
+        "source": "Panel.qml"
+      }
+    },
+    {
+      "name": "Prayer settings",
+      "kind": "custom",
+      "description": "Online tables, method suggestion, time correction, method, Asr and Hijri controls.",
+      "native": {
+        "language": "qml",
+        "source": "Panel.qml"
+      }
+    },
+    {
+      "name": "Reminders",
+      "kind": "custom",
+      "description": "Delivery mode and at-adhan/advance toggles, with conditional lead-minute adjustment.",
+      "native": {
+        "language": "qml",
+        "source": "Panel.qml"
+      }
+    },
+    {
+      "name": "Stepper",
+      "kind": "custom",
+      "description": "Native minus/plus actions surrounding a centered bold value.",
+      "native": {
+        "language": "qml",
+        "source": "StepperRow.qml"
       }
     },
     {
       "name": "Bar widget",
       "kind": "custom",
-      "description": "Native active imminent state, language-aware font and three mouse actions.",
+      "description": "Live-font bar label with native imminent state, contextual tooltip and three mouse actions.",
       "native": {
         "language": "qml",
         "source": "BarWidget.qml"
@@ -114,37 +189,39 @@
     }
   ],
   "narrative": {
-    "northStar": "A moment of light",
-    "overview": "Noor expresses the prayer window through generous numerals, intentional Arabic typography and a clear timetable. Deep emerald grounds warm ivory text; brass gold identifies the next prayer and its start. The centered light countdown is the primary answer, with a short caption explaining its meaning.\n\nThe implementation is native Qt Quick / Quickshell on Omarchy. Noor is the persisted default appearance; System colors are an explicit alternative. Campaign direction uses a sculptural mihrab and sunlight, separate from the working interface. The user rejected the former ring and generic screenshot-on-mosque cover.",
+    "northStar": "Prayer timeline",
+    "overview": "A chronological prayer list is the main composition. The next prayer expands just enough to contain its countdown, with the exact start aligned to the other entries. The native panel follows live Omarchy colors and English typography, retains Noto Arabic families and separates Location, Reminders and Settings into direct destinations.",
     "keyCharacteristics": [
-      "Typographic hierarchy with distinct Arabic heading and body families",
-      "Emerald, ivory and gold by default; optional live System colors",
-      "Clear aligned timetable with a taller next-prayer row",
-      "Flat native surfaces and restrained motion"
+      "One integrated countdown inside the next prayer row",
+      "Live desktop colors and English/numeric typography",
+      "Noto Arabic families and mirrored reading layout",
+      "Thin timeline, square markers and flat native controls",
+      "Direct, distinct Location, Reminders and Settings views"
     ],
     "rules": [
       {
-        "name": "The Appearance Rule",
-        "body": "Preserve the Noor/System conditional bindings. Noor is an authored palette; System mode evaluates the current Omarchy colors instead of a screenshot palette.",
+        "name": "The Desktop Theme Rule",
+        "body": "Keep live bindings; the review screenshot palette is one Omarchy theme. There is no user-facing appearance switch.",
         "section": "colors"
       },
       {
         "name": "The Numeric Rule",
-        "body": "Keep schedule numerals right-aligned and unmirrored; apply reading alignment to language-bearing labels. Do not substitute a decorative clock face for the countdown.",
+        "body": "Keep exact prayer times right-aligned and unmirrored. Mirror Arabic composition and label alignment without replacing the English/numeric system font.",
         "section": "typography"
       }
     ],
     "dos": [
-      "Do preserve Noor as default and System colors as an explicit alternative.",
-      "Do use the implemented Arabic heading/body families and Noto Sans numerals.",
-      "Do keep country selection and offline city setup visible before contextual Morocco controls.",
-      "Do keep native Qt Quick controls and Omarchy scale bindings."
+      "Do keep next start and countdown together, with an explicit tomorrow row at the day boundary.",
+      "Do follow live desktop colors and English/numeric fonts, retaining Noto Arabic headings/body.",
+      "Do preserve distinct destinations and initially hidden advanced location controls.",
+      "Do retain native Qt Quick controls, keyboard focus and Omarchy scale bindings.",
+      "Do distinguish approved generated concepts and blue-hour cover from actual desktop screenshots and preserve their provenance."
     ],
     "donts": [
-      "Don’t restore the rejected ring or a decorative clock face.",
-      "Don’t put screenshot-on-mosque artwork inside the working interface.",
-      "Don’t describe this native Linux panel as a web or mobile application.",
-      "Don’t add glow or a reveal that delays prayer information."
+      "Don’t restore a fixed emerald palette, an appearance selector, oversized hero numerals, a separate countdown card or a ring.",
+      "Don’t duplicate settings across views or expose all advanced location controls on entry.",
+      "Don’t present illustrative concept times or campaign artwork as a product screenshot.",
+      "Don’t describe the native Linux panel as web or mobile, or claim measured concept-diff results."
     ]
   }
 }
