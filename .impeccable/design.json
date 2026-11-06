@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-05T15:15:02.989013+00:00",
+  "generatedAt": "2026-11-06T18:44:06.320061+00:00",
   "title": "Design System: Salat Times",
   "extensions": {
     "platform": "Qt Quick / Quickshell / Omarchy",
@@ -23,14 +23,22 @@
       "next-surface": {
         "role": "primary",
         "displayName": "Next prayer accent wash"
+      },
+      "hero-surface": {
+        "role": "primary",
+        "displayName": "Next-prayer surface wash",
+        "source": "Panel.qml: next-prayer Rectangle"
       }
     },
     "typographyMeta": {
       "display": {
-        "purpose": "Remaining time, horizontal fit down to Style.space(28)."
+        "purpose": "Remaining time, horizontal fit down to Style.space(22), with an explicit Time remaining caption."
       },
       "body": {
         "purpose": "Language-aware labels and timetable times."
+      },
+      "prayer-name": {
+        "purpose": "Bold next prayer name on the primary tonal surface."
       }
     },
     "motion": [
@@ -61,10 +69,20 @@
   },
   "components": [
     {
+      "name": "Next-prayer surface",
+      "kind": "custom",
+      "refersTo": "next-prayer-surface",
+      "description": "154 logical-unit tonal rectangle: bold prayer name, 38-unit countdown, Time remaining caption and exact start beside the 104-unit day dial. Dimensions use Style.space.",
+      "native": {
+        "language": "qml",
+        "source": "Panel.qml"
+      }
+    },
+    {
       "name": "Prayer row",
       "kind": "custom",
       "refersTo": "prayer-row",
-      "description": "Rectangle delegate: height Style.space(40), radius Style.cornerRadius; right-aligned Style.space(56) time column.",
+      "description": "Rectangle delegate: height Style.space(44), radius Style.cornerRadius; right-aligned Style.space(56) time column.",
       "native": {
         "language": "qml",
         "source": "Panel.qml"
@@ -74,7 +92,7 @@
       "name": "Next prayer row",
       "kind": "custom",
       "refersTo": "prayer-row-next",
-      "description": "isNext adds accent text, bold weight, localized Next label and accent alpha 0.12 fill.",
+      "description": "Next prayer uses accent text, bold name/time, localized model status and accent alpha 0.12 fill, increasing to 0.22 when imminent.",
       "native": {
         "language": "qml",
         "source": "Panel.qml"
@@ -84,7 +102,7 @@
       "name": "Day dial",
       "kind": "custom",
       "refersTo": "day-dial",
-      "description": "Canvas with event-driven painting and real 24-hour fractions; see DESIGN.md for geometry.",
+      "description": "Small adjacent 104 logical-unit Canvas with event-driven painting and real 24-hour fractions; exact next start sits at its center.",
       "native": {
         "language": "qml",
         "source": "DayDial.qml"
@@ -117,11 +135,20 @@
         "language": "qml",
         "source": "BarWidget.qml"
       }
+    },
+    {
+      "name": "Location and calendar settings",
+      "kind": "custom",
+      "description": "Native worldwide city search with busy, empty and connection feedback; ±2-day Hijri stepper; labeled unmirrored latitude/longitude fields and validated offline Apply coordinates action.",
+      "native": {
+        "language": "qml",
+        "source": "Panel.qml"
+      }
     }
   ],
   "narrative": {
-    "northStar": "Today’s prayer timetable",
-    "overview": "A compact native prayer timetable that belongs to the current Omarchy desktop. Clear prayer times lead; the theme supplies the font, foreground, surface, and accent. The 24-hour orbit explains the day without competing with the countdown.",
+    "northStar": "The daily prayer instrument",
+    "overview": "A compact native prayer timetable that belongs to the current Omarchy desktop. The next prayer and explicit time remaining lead inside a tonal rectangle; a small adjacent day ring provides context. Its arc represents the current prayer window. The theme supplies the font, foreground, surface, and accent.",
     "keyCharacteristics": [
       "Theme-bound native typography and color",
       "Aligned times with explicit next-prayer emphasis",
