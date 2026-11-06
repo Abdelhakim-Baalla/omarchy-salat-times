@@ -325,6 +325,13 @@ Ui.Panel {
                 }
                 PlainLabel {
                   width: parent.width
+                  text: root.arabic ? "الوقت المتبقي" : "Time remaining"
+                  color: root.muted
+                  font.family: root.contentFontFamily
+                  font.pixelSize: Style.font.caption
+                }
+                PlainLabel {
+                  width: parent.width
                   text: root.heroWhen ? ((root.arabic ? "عند " : "at ") + root.heroWhen) : ""
                   color: root.muted
                   font.family: root.contentFontFamily
@@ -709,6 +716,25 @@ Ui.Panel {
               text: root.arabic ? "إحداثيات يدوية · دون إنترنت" : "Coordinates · works offline"
               foreground: root.contentForeground
               fontFamily: root.contentFontFamily
+            }
+            Row {
+              width: parent.width
+              spacing: Style.space(8)
+              LayoutMirroring.enabled: false
+              PlainLabel {
+                width: (parent.width - parent.spacing) / 2
+                text: root.arabic ? "خط العرض" : "Latitude"
+                color: root.muted
+                font.family: root.contentFontFamily
+                font.pixelSize: Style.font.caption
+              }
+              PlainLabel {
+                width: (parent.width - parent.spacing) / 2
+                text: root.arabic ? "خط الطول" : "Longitude"
+                color: root.muted
+                font.family: root.contentFontFamily
+                font.pixelSize: Style.font.caption
+              }
             }
             Row {
               width: parent.width
