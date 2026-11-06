@@ -29,6 +29,7 @@ Item {
   property int offsetMinutes: 0
   property int hijriAdjustment: 0
   property string refreshError: ""
+  property string desktopTimezone: ""
   property bool notifyAtAdhan: true
   property bool notifyLead: true
   property bool useWeatherLocation: true
@@ -159,6 +160,7 @@ Item {
     todaySchedule = todaySched || []
     tomorrowSchedule = tomorrowSched || []
     source = src || "offline"
+    if (source !== "offline") refreshError = ""
     var today = new Date(_now)
     nextInfo = Model.nextAfterSchedule(todaySchedule, tomorrowSchedule, today)
     rows = Model.enrichSchedule(todaySchedule, today, lang)
@@ -214,7 +216,7 @@ Item {
     var now = new Date(_now)
     todayFetch.command = [
       "curl", "-fsS", "--max-time", "8", "--max-filesize", "262144",
-      Model.aladhanUrl(latitude, longitude, method, madhab, offsetMinutes, now)
+      Model.aladhanUrl(latitude, longitude, method, madhab, offsetMinutes, now, desktopTimezone)
     ]
     todayFetch.running = true
   }
@@ -265,11 +267,12 @@ Item {
           var tom = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)
           tomorrowFetch.command = [
             "curl", "-fsS", "--max-time", "8", "--max-filesize", "262144",
-            Model.aladhanUrl(root.latitude, root.longitude, root.method, root.madhab, root.offsetMinutes, tom)
+            Model.aladhanUrl(root.latitude, root.longitude, root.method, root.madhab, root.offsetMinutes, tom, root.desktopTimezone)
           ]
           tomorrowFetch.running = true
         } else {
           root.fetching = false
+          root.refreshError = root.lang === "ar" ? "تعذر التحديث؛ الحساب المحلي مستخدم" : "Online update unavailable; using calculation"
           if (!root.todaySchedule.length) root.recomputeOffline()
         }
       }
@@ -588,11 +591,23 @@ Item {
   onLocationNameChanged: scheduleSave()
 
   Process {
+    id: timezoneProc
+    command: ["timedatectl", "show", "--property=Timezone", "--value"]
+    stdout: StdioCollector {
+      onStreamFinished: {
+        var zone = text.trim()
+        if (/^[A-Za-z_+\/-]+$/.test(zone)) { root.desktopTimezone = zone; root.recompute() }
+      }
+    }
+  }
+
+  Process {
     id: ensureDirProc
     command: ["mkdir", "-p", root.home + "/.local/state/omarchy"]
   }
 
   Component.onCompleted: {
+    timezoneProc.running = true
     ensureDirProc.running = true
     Qt.callLater(function() {
       weatherFile.reload()

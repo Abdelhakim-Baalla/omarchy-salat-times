@@ -96,7 +96,7 @@ function aladhanSchool(madhab) {
 
 // Build Aladhan timings URL. `tune` applies the same minute correction the
 // phone apps often bake in (Morocco: typically +5 after astronomical zawal).
-function aladhanUrl(lat, lng, methodId, madhab, offsetMinutes, date) {
+function aladhanUrl(lat, lng, methodId, madhab, offsetMinutes, date, timezone) {
   var d = date || new Date()
   var day = pad2(d.getDate()) + "-" + pad2(d.getMonth() + 1) + "-" + d.getFullYear()
   var off = clampOffsetMinutes(offsetMinutes, 5)
@@ -106,6 +106,7 @@ function aladhanUrl(lat, lng, methodId, madhab, offsetMinutes, date) {
     + "&longitude=" + encodeURIComponent(String(lng))
     + "&method=" + aladhanMethodId(methodId)
     + "&school=" + aladhanSchool(madhab)
+    + (timezone ? "&timezonestring=" + encodeURIComponent(timezone) : "")
     + "&iso8601=true"
     + "&tune=" + tune
 }

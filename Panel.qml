@@ -34,7 +34,7 @@ Ui.Panel {
   readonly property string heroTime: salat ? salat.remainingLabel : "--:--"
   readonly property string heroWhen: salat
     ? (salat.nextIsTomorrow
-        ? (arabic ? "غداً" : "Tomorrow")
+        ? ((arabic ? "غداً · " : "Tomorrow · ") + salat.nextTime)
         : salat.nextTime)
     : ""
 
@@ -47,6 +47,8 @@ Ui.Panel {
   property string locationDraft: ""
   property var locationSuggestions: []
   property int suggestionIndex: 0
+  property string locationFeedback: ""
+  property bool geocodeBusy: false
 
   readonly property var methodOptions: Model.methodOptions()
   readonly property var madhabOptions: arabic
@@ -84,6 +86,10 @@ Ui.Panel {
   }
 
   function cancelEditLocation() {
+    geocodeTimer.stop()
+    geocodeProc.running = false
+    geocodeBusy = false
+    locationFeedback = ""
     editingLocation = false
     locationDraft = ""
     locationSuggestions = []
@@ -101,11 +107,10 @@ Ui.Panel {
       ? locationSuggestions[Math.max(0, Math.min(suggestionIndex, locationSuggestions.length - 1))]
       : null
     if (choice) {
-      salat.setLocation(choice.name, choice.latitude, choice.longitude)
+      salat.setLocation(choice.name, choice.latitude, choice.longitude, choice.countryCode)
     } else if (name !== "") {
-      salat.locationName = name
-      geocodeProc.query = name
-      geocodeProc.running = true
+      requestGeocode(name)
+      return
     }
     cancelEditLocation()
   }
@@ -116,7 +121,11 @@ Ui.Panel {
       locationSuggestions = []
       return
     }
-    geocodeProc.query = query
+    geocodeTimer.stop()
+    geocodeProc.running = false
+    locationSuggestions = []
+    locationFeedback = ""
+    geocodeProc.query = query.slice(0, 160)
     geocodeTimer.restart()
   }
 
@@ -124,11 +133,16 @@ Ui.Panel {
     id: geocodeTimer
     interval: 320
     repeat: false
-    onTriggered: geocodeProc.running = true
+    onTriggered: { root.geocodeBusy = true; geocodeProc.running = true }
   }
 
   Process {
     id: geocodeProc
+    onExited: function(code) {
+      root.geocodeBusy = false
+      if (code !== 0 && root.editingLocation)
+        root.locationFeedback = root.arabic ? "تعذر الاتصال. أعد المحاولة." : "Could not connect. Please try again."
+    }
     property string query: ""
     command: [
       "curl", "-fsS", "--max-time", "6", "--max-filesize", "262144",
@@ -137,7 +151,11 @@ Ui.Panel {
     ]
     stdout: StdioCollector {
       onStreamFinished: {
+        root.geocodeBusy = false
+        if (!root.editingLocation) return
         root.locationSuggestions = Model.parseGeocodingResults(text)
+        root.locationFeedback = root.locationSuggestions.length ? ""
+          : (root.arabic ? "لا توجد نتائج. جرّب المدينة، البلد." : "No matches. Try city, country.")
         root.suggestionIndex = 0
       }
     }
@@ -265,48 +283,41 @@ Ui.Panel {
               accent: root.accent
               horizontalPadding: 0
               onClicked: {
-                if (root.salat && root.salat.useHabous) root.settingsOpen = true
-                else root.startEditLocation()
+                root.startEditLocation()
               }
             }
           }
 
-          // The countdown is inscribed in the day ring. The arc is only the
-          // current prayer window, so the ornament and the answer are one object.
-          Item {
+          // A compact daily instrument: the answer leads, the dial gives context.
+          Rectangle {
             width: parent.width
-            height: dial.width
-            DayDial {
-              id: dial
-              anchors.horizontalCenter: parent.horizontalCenter
-              anchors.verticalCenter: parent.verticalCenter
-              width: Style.space(232)
-              height: width
-              foreground: root.contentForeground
-              accent: root.accent
-              points: root.salat ? root.salat.dialPoints : []
-              journey: root.salat ? root.salat.dialJourney : ({})
+            height: Style.space(154)
+            radius: Style.cornerRadius
+            color: Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.09)
+            Row {
+              anchors.fill: parent
+              anchors.margins: Style.space(16)
+              spacing: Style.space(12)
+              LayoutMirroring.enabled: false
               Column {
-                width: Style.space(148)
-                anchors.centerIn: parent
-                spacing: Style.space(2)
+                width: parent.width - dial.width - parent.spacing
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: Style.space(6)
                 PlainLabel {
                   width: parent.width
                   text: root.heroName || (root.arabic ? "جارٍ الحساب" : "Calculating")
-                  horizontalAlignment: Text.AlignHCenter
                   color: root.accent
                   font.family: root.contentFontFamily
-                  font.pixelSize: Style.font.heading
+                  font.pixelSize: Style.space(24)
                   font.bold: true
                   elide: Text.ElideRight
                 }
                 PlainLabel {
                   width: parent.width
                   text: root.heroTime
-                  horizontalAlignment: Text.AlignHCenter
                   color: root.contentForeground
                   font.family: root.contentFontFamily
-                  font.pixelSize: Style.space(36)
+                  font.pixelSize: Style.space(38)
                   font.weight: Font.DemiBold
                   fontSizeMode: Text.HorizontalFit
                   minimumPixelSize: Style.space(22)
@@ -314,17 +325,29 @@ Ui.Panel {
                 }
                 PlainLabel {
                   width: parent.width
-                  text: root.heroWhen
-                    ? ((root.salat && root.salat.nextIsTomorrow)
-                        ? root.heroWhen
-                        : ((root.arabic ? "عند " : "at ") + root.heroWhen))
-                    : ""
-                  horizontalAlignment: Text.AlignHCenter
+                  text: root.heroWhen ? ((root.arabic ? "عند " : "at ") + root.heroWhen) : ""
                   color: root.muted
                   font.family: root.contentFontFamily
-                  font.pixelSize: root.arabic ? Math.max(Style.font.bodySmall, Style.space(12)) : Style.font.bodySmall
+                  font.pixelSize: Style.font.bodySmall
                   elide: Text.ElideRight
-                  LayoutMirroring.enabled: false
+                }
+              }
+              DayDial {
+                id: dial
+                width: Style.space(104)
+                height: width
+                anchors.verticalCenter: parent.verticalCenter
+                foreground: root.contentForeground
+                accent: root.accent
+                points: root.salat ? root.salat.dialPoints : []
+                journey: root.salat ? root.salat.dialJourney : ({})
+                PlainLabel {
+                  anchors.centerIn: parent
+                  text: root.salat ? root.salat.nextTime : ""
+                  font.family: root.contentFontFamily
+                  font.pixelSize: Style.font.body
+                  font.bold: true
+                  color: root.accent
                 }
               }
             }
@@ -382,7 +405,7 @@ Ui.Panel {
                   ? root.accent
                   : (isPassed ? root.muted : root.contentForeground)
                 width: timeline.width
-                height: Style.space(40)
+                height: Style.space(44)
                 radius: Style.cornerRadius
                 color: isNext
                   ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, root.salat && root.salat.imminent ? 0.22 : 0.12)
@@ -438,6 +461,27 @@ Ui.Panel {
               font.pixelSize: root.arabic ? Math.max(Style.font.body, Style.space(14)) : Style.font.body
               wrapMode: Text.WordWrap
             }
+          }
+
+          PlainLabel {
+            width: parent.width
+            visible: root.salat && root.salat.refreshError !== ""
+            text: root.salat ? root.salat.refreshError : ""
+            color: root.muted
+            font.family: root.contentFontFamily
+            font.pixelSize: Style.font.bodySmall
+            wrapMode: Text.WordWrap
+          }
+          Ui.Button {
+            width: parent.width
+            text: root.salat && root.salat.fetching ? (root.arabic ? "جارٍ التحديث…" : "Refreshing…")
+              : (root.arabic ? "تحديث المواقيت" : "Refresh prayer times")
+            enabled: root.salat && root.salat.onlineEnabled && !root.salat.fetching
+            focusable: true
+            foreground: root.muted
+            accent: root.accent
+            fontFamily: root.contentFontFamily
+            onClicked: if (root.salat) root.salat.fetchOnline()
           }
 
           } // overview
@@ -519,7 +563,7 @@ Ui.Panel {
 
             Loader {
               width: parent.width
-              active: !root.editingLocation && !(root.salat && root.salat.useHabous)
+              active: !root.editingLocation
               sourceComponent: Component {
                 Row {
                   width: column.width
@@ -561,7 +605,7 @@ Ui.Panel {
                   TextField {
                     width: parent.width
                     text: root.locationDraft
-                    placeholderText: root.arabic ? "مدينة…" : "City…"
+                    placeholderText: root.arabic ? "المدينة، البلد…" : "City, country…"
                     foreground: root.contentForeground
                     accent: root.accent
                     Component.onCompleted: forceActiveFocus()
@@ -579,6 +623,16 @@ Ui.Panel {
                       if (root.locationSuggestions.length)
                         root.suggestionIndex = Math.max(root.suggestionIndex - 1, 0)
                     }
+                  }
+
+                  PlainLabel {
+                    width: parent.width
+                    visible: root.geocodeBusy || root.locationFeedback !== ""
+                    text: root.geocodeBusy ? (root.arabic ? "جارٍ البحث…" : "Searching…") : root.locationFeedback
+                    color: root.muted
+                    font.family: root.contentFontFamily
+                    font.pixelSize: Style.font.bodySmall
+                    wrapMode: Text.WordWrap
                   }
 
                   Repeater {
@@ -625,6 +679,78 @@ Ui.Panel {
                   }
                 }
               }
+            }
+
+            PanelSectionHeader {
+              text: root.arabic ? "التاريخ الهجري" : "Hijri calendar"
+              foreground: root.contentForeground
+              fontFamily: root.contentFontFamily
+            }
+            PlainLabel {
+              width: parent.width
+              text: (root.salat ? root.salat.hijriLabel + "\n" : "") + (root.arabic
+                ? "تقويم حسابي؛ اضبط ± يومين لموافقة الرؤية المحلية."
+                : "Civil calendar; adjust ±2 days to match local moon sighting.")
+              color: root.muted
+              font.family: root.contentFontFamily
+              font.pixelSize: Style.font.bodySmall
+              wrapMode: Text.WordWrap
+            }
+            StepperRow {
+              value: root.salat ? root.salat.hijriAdjustment : 0
+              foreground: root.contentForeground
+              fontFamily: root.contentFontFamily
+              onStep: function(delta) {
+                if (root.salat) root.salat.hijriAdjustment = Model.clampInt(root.salat.hijriAdjustment + delta, 0, -2, 2)
+              }
+            }
+
+            PanelSectionHeader {
+              text: root.arabic ? "إحداثيات يدوية · دون إنترنت" : "Coordinates · works offline"
+              foreground: root.contentForeground
+              fontFamily: root.contentFontFamily
+            }
+            Row {
+              width: parent.width
+              spacing: Style.space(8)
+              LayoutMirroring.enabled: false
+              TextField {
+                id: latitudeInput
+                width: (parent.width - parent.spacing) / 2
+                text: root.salat ? String(root.salat.latitude) : ""
+                placeholderText: root.arabic ? "خط العرض" : "Latitude"
+                foreground: root.contentForeground
+                accent: root.accent
+              }
+              TextField {
+                id: longitudeInput
+                width: (parent.width - parent.spacing) / 2
+                text: root.salat ? String(root.salat.longitude) : ""
+                placeholderText: root.arabic ? "خط الطول" : "Longitude"
+                foreground: root.contentForeground
+                accent: root.accent
+              }
+            }
+            Ui.Button {
+              width: parent.width
+              text: root.arabic ? "تطبيق الإحداثيات" : "Apply coordinates"
+              enabled: latitudeInput.text.trim() !== "" && longitudeInput.text.trim() !== ""
+                && isFinite(Number(latitudeInput.text)) && Math.abs(Number(latitudeInput.text)) <= 90
+                && isFinite(Number(longitudeInput.text)) && Math.abs(Number(longitudeInput.text)) <= 180
+              focusable: true
+              foreground: root.contentForeground
+              accent: root.accent
+              fontFamily: root.contentFontFamily
+              onClicked: if (root.salat) root.salat.setLocation("", Number(latitudeInput.text), Number(longitudeInput.text), "")
+            }
+            PlainLabel {
+              width: parent.width
+              text: root.arabic ? "كل الأوقات بتوقيت جهازك. تحقّق من طريقة الحساب بعد تغيير البلد."
+                : "Times use your desktop timezone. Check the calculation method when changing country."
+              color: root.muted
+              font.family: root.contentFontFamily
+              font.pixelSize: Style.font.bodySmall
+              wrapMode: Text.WordWrap
             }
 
             // ---- Calculation
