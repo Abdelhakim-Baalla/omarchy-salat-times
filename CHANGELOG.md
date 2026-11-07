@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.0
+
+- Apply the selected wide split layout: next-prayer summary, timetable and action rail, mirrored in Arabic.
+- Use Arabic for first-run and invalid/missing language settings, while respecting an explicit saved English preference.
+- Fix Arabic bar labels with د/س units and isolated right-to-left ordering.
+- Add localized countdown phrases and recognized city/country labels without renaming custom locations.
+- Keep focused settings and add Today for Qibla, fasting information, source and refresh.
+- Add a matching vector/raster brand icon, fresh wide screenshots and updated setup documentation.
+
 ## 1.5.0
 
 - Follow Omarchy's current colors and English font; keep Noto Sans Arabic and Noto Kufi Arabic.

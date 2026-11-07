@@ -27,7 +27,7 @@ Item {
   property var countries: []
   property var cityPresets: []
   property string madhab: "Standard"
-  property string lang: "ar"
+  property string lang: "ar" // Arabic is the default; explicit saved English remains available.
   property string reminderMode: "notification"
   property string barStyle: "full"
   property int notifyLeadMinutes: 10
@@ -74,7 +74,7 @@ Item {
   readonly property double remainingMs: nextPrayer
     ? Math.max(0, nextPrayer.date.getTime() - _now) : 0
   readonly property string remainingLabel: Model.formatCountdown(remainingMs)
-  readonly property string remainingShort: Model.formatCountdownShort(remainingMs)
+  readonly property string remainingShort: Model.formatCountdownShort(remainingMs, lang)
   readonly property string nextName: nextPrayer ? Model.prayerName(nextPrayer.id, lang, nextPrayer.date) : ""
   readonly property string nextNameEn: nextPrayer ? Model.prayerName(nextPrayer.id, "en", nextPrayer.date) : ""
   readonly property string nextNameAr: nextPrayer ? Model.prayerName(nextPrayer.id, "ar", nextPrayer.date) : ""
@@ -83,7 +83,9 @@ Item {
 
   readonly property string hijriLabel: Model.formatHijri(nowDate, lang, hijriAdjustment)
   readonly property string gregorianLabel: nowDate.toLocaleDateString(Qt.locale(lang === "ar" ? "ar_MA" : "en_GB"), "dddd d MMMM yyyy")
-  readonly property string locationLabel: locationName !== "" ? locationName : (latitude.toFixed(2) + ", " + longitude.toFixed(2))
+  readonly property string locationLabel: locationName !== ""
+    ? Model.localizedLocation(locationName, latitude, longitude, cityPresets, countries, lang)
+    : (latitude.toFixed(2) + ", " + longitude.toFixed(2))
   readonly property string qiblaLabel: Model.qiblaLabel(latitude, longitude, lang)
   readonly property string fastingHint: Model.fastingHint(nowDate, todaySchedule, lang, hijriAdjustment)
   readonly property string methodLabel: Model.methodLabel(method)
@@ -582,7 +584,7 @@ Item {
     hijriAdjustment = Model.clampInt(data.hijriAdjustment, 0, -2, 2)
     method = Model.validMethod(data.method || "Morocco")
     madhab = Model.validMadhab(data.madhab || "Standard")
-    lang = data.lang === "en" ? "en" : "ar"
+    lang = Model.validLang(data.lang)
     reminderMode = Model.validReminderMode(data.reminderMode || "notification")
     barStyle = Model.validBarStyle(data.barStyle || "full")
     notifyLeadMinutes = Model.clampInt(data.notifyLeadMinutes, 10, 1, 60)
