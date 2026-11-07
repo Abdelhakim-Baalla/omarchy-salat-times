@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title id="title">Salat Times — mosque arch at blue hour</title>
+  <rect width="128" height="128" rx="26" fill="#12357b"/>
+  <path d="M29 96V69c0-18 22-23 35-42 13 19 35 24 35 42v27" fill="none" stroke="#fff5df" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M48 94V74c0-10 9-14 16-23 7 9 16 13 16 23v20" fill="#fff5df"/>
+  <path d="M23 103h82" fill="none" stroke="#ffab78" stroke-width="8" stroke-linecap="round"/>
+</svg>

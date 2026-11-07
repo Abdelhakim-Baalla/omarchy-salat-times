@@ -79,7 +79,7 @@ function validMadhab(id) {
 }
 
 function validLang(id) {
-  return id === "ar" ? "ar" : "en"
+  return id === "en" ? "en" : "ar"
 }
 
 function validReminderMode(id) {
@@ -549,13 +549,50 @@ function formatCountdown(ms) {
   return minutes + ":" + pad2(seconds)
 }
 
-function formatCountdownShort(ms) {
+function formatCountdownShort(ms, lang) {
   var total = Math.max(0, Math.floor(Number(ms) / 1000) || 0)
   var hours = Math.floor(total / 3600)
   var minutes = Math.floor((total % 3600) / 60)
+  if (lang === "ar") {
+    // RTL isolation keeps numerals, Arabic units and adjacent bar widgets separate.
+    var label = hours > 0 ? hours + " س" + (minutes ? " " + minutes + " د" : "")
+      : minutes > 0 ? minutes + " د" : "أقل من دقيقة"
+    return "\u2067" + label + "\u2069"
+  }
   if (hours > 0) return hours + "h " + minutes + "m"
   if (minutes > 0) return minutes + "m"
   return "<1m"
+}
+
+// Short spoken duration for the wide summary; the bar keeps its compact clock.
+function formatNextCountdown(ms, lang) {
+  var minutes = Math.max(0, Math.ceil(Number(ms) / 60000) || 0)
+  var ar = validLang(lang) === "ar"
+  if (minutes < 1) return ar ? "حان وقت الصلاة" : "Prayer time"
+  var h = Math.floor(minutes / 60), m = minutes % 60
+  if (!ar) return "in " + (h ? h + "h" + (m ? " " : "") : "") + (m ? m + "min" : "")
+  function unit(n, one, two, few, many) {
+    return n === 1 ? one : n === 2 ? two : n + " " + (n <= 10 ? few : many)
+  }
+  var parts = []
+  if (h) parts.push(unit(h, "ساعة", "ساعتين", "ساعات", "ساعة"))
+  if (m) parts.push(unit(m, "دقيقة", "دقيقتين", "دقائق", "دقيقة"))
+  return "بعد " + parts.join(" و")
+}
+
+function localizedLocation(name, latitude, longitude, presets, countries, lang) {
+  var ar = validLang(lang) === "ar"
+  for (var i = 0; presets && i < presets.length; i++) {
+    var p = presets[i]
+    // Translate recognized names, never overwrite a user's custom place label.
+    var known = name === p.name || name === p.nameAr || String(name).indexOf(p.name + ",") === 0 || String(name).indexOf(p.nameAr + ",") === 0
+    if (!known || Math.abs(latitude - p.latitude) > 0.05 || Math.abs(longitude - p.longitude) > 0.05) continue
+    var country = ""
+    for (var j = 0; countries && j < countries.length; j++)
+      if (countries[j].code === p.countryCode) { country = ar ? countries[j].nameAr : countries[j].name; break }
+    return (ar ? p.nameAr || p.name : p.name) + (country ? (ar ? "، " : ", ") + country : "")
+  }
+  return String(name || "")
 }
 
 function findNext(schedule, now) {
@@ -632,10 +669,12 @@ function barLabel(style, nextInfo, now, lang) {
   var remaining = nextInfo.prayer.date.getTime() - now.getTime()
   var glyph = prayerGlyph(nextInfo.prayer.id)
   var s = validBarStyle(style)
-  if (s === "name") return glyph + " " + name
-  if (s === "countdown") return glyph + " " + formatCountdownShort(remaining)
-  if (s === "compact") return name
-  return glyph + " " + name + " · " + formatCountdownShort(remaining)
+  var gap = validLang(lang) === "ar" ? "\u2002" : " "
+  var label = s === "name" ? glyph + gap + name
+    : s === "countdown" ? glyph + gap + formatCountdownShort(remaining, lang)
+    : s === "compact" ? name
+    : glyph + gap + name + gap + "·" + gap + formatCountdownShort(remaining, lang)
+  return validLang(lang) === "ar" ? "\u2067" + label + "\u2069" : label
 }
 
 // Tabular Islamic civil calendar. Local moon-sighting may differ: expose a

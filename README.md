@@ -1,8 +1,10 @@
+<img src="icon.svg" width="64" height="64" alt="Salat Times mosque-arch icon">
+
 # Salat Times — prayer times for Omarchy
 
 ![Salat Times — prayer times for Omarchy, with a blue-hour mosque skyline](marketplace.png)
 
-A Muslim prayer-time plugin for the Omarchy Linux bar. See the next salah, its countdown, today's timetable, the Hijri date and Qibla direction. The compact timeline follows your desktop colors and English font, with dedicated Arabic typography and a mirrored Arabic layout.
+An Arabic-first Muslim prayer-time plugin for the Omarchy Linux bar. See the next salah, its countdown, today's timetable, the Hijri date and Qibla direction. The wide split view puts the next-prayer summary beside today’s timetable. It follows your desktop colors and English font, with dedicated Arabic typography and a mirrored Arabic layout. Arabic is the default; switch to English at any time. An explicit saved English preference is respected.
 
 Choose a location from **249 countries and territories**, use an offline city preset, or enter coordinates. Supports adhan notifications, Ramadan suhoor/iftar hints, Moroccan Habous tables, AlAdhan and offline calculation.
 
@@ -10,11 +12,16 @@ Choose a location from **249 countries and territories**, use an offline city pr
 
 ## Screenshots
 
-Actual desktop captures of version 1.5.0. Your colors and English font follow your active Omarchy theme.
+Actual desktop captures of version 1.6.0. Your colors and English font follow your active Omarchy theme.
 
-| English | العربية |
-| --- | --- |
-| ![English prayer timeline with tomorrow's Fajr countdown](artwork/screenshots/panel-en.png) | ![Arabic prayer timeline with mirrored layout and Noto Arabic fonts](artwork/screenshots/panel-ar.png) |
+![Arabic wide prayer panel with next-prayer summary, timetable and focused actions](artwork/screenshots/panel-ar.png)
+
+<details>
+<summary>English view</summary>
+
+![English wide prayer panel](artwork/screenshots/panel-en.png)
+
+</details>
 
 ## Install
 
@@ -32,11 +39,13 @@ omarchy bar move abdelhakim.salat --section centerEnd
 
 ## Daily use
 
-- Left-click the bar widget to open the timeline. Escape closes it.
-- The highlighted prayer contains its countdown and exact start time. After Isha, tomorrow's Fajr appears below today's schedule.
-- Open **Location**, **Reminders** or **Settings** directly from the footer; **Back to timetable** returns to the day.
-- Use the language button or `A` to switch Arabic/English. Middle-clicking the widget also switches languages.
+- Left-click the bar widget to open the wide panel. Escape closes it.
+- The summary shows the next prayer, exact start and readable countdown beside six daily times. After Isha, the summary explicitly says tomorrow; the timetable continues to show today.
+- Open **Location**, **Reminders** or **Settings** directly from the panel; **Back to timetable** returns to the day.
+- Arabic starts by default. Use the language button or `A` to switch Arabic/English. Middle-clicking the widget also switches languages.
 - `E` opens Location; `S` opens prayer settings. Tab navigates controls and Escape returns from settings.
+- Arabic bar countdowns use **د** (minutes) and **س** (hours), with stable right-to-left ordering.
+- **Today** opens Qibla, the timetable source, Ramadan hints and refresh.
 - Right-click or `B` cycles bar labels. `M` cycles calculation methods.
 - Friday Dhuhr reads as Jumu'ah. Sunrise is a day marker. Ramadan adds a suhoor or iftar hint.
 
@@ -60,7 +69,7 @@ Country-based method suggestions use Umm Al-Qura for Saudi Arabia, the Egyptian 
 
 **Hijri date:** uses the Islamic civil calendar with an independent −2 to +2 day adjustment for local moon-sighting decisions. It is a calculated date, not an official sighting feed. The adjustment also controls the Ramadan hint. Dates change at civil midnight.
 
-The timetable's source action identifies Habous, AlAdhan or offline calculation and lets you refresh when online tables are enabled. When tomorrow's online data is unavailable, tomorrow is calculated locally. Calculated times can differ from a local mosque's timetable.
+**Today** identifies the timetable source—Habous, AlAdhan or offline calculation—and lets you refresh when online tables are enabled. When tomorrow's online data is unavailable, tomorrow is calculated locally. Calculated times can differ from a local mosque's timetable.
 
 ## Reminders
 
@@ -120,6 +129,7 @@ omarchy-shell abdelhakim.salat.widget settings
 omarchy-shell salat status
 omarchy-shell abdelhakim.salat.widget page location
 omarchy-shell abdelhakim.salat.widget page reminders
+omarchy-shell abdelhakim.salat.widget page day
 omarchy-shell salat language ar
 # Open Saudi quick-city selection:
 omarchy-shell abdelhakim.salat.widget country SA

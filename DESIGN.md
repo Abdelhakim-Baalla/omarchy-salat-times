@@ -1,153 +1,169 @@
 ---
-name: Salat Times · Prayer timeline
-description: A compact native prayer timeline that follows Omarchy
+name: Salat Times · Wide split view
+description: A native prayer overview that follows Omarchy and reads naturally in Arabic and English
 colors:
   background: 'Color.popups.background'
   foreground: 'bar ? bar.foreground : Color.foreground'
   accent: 'Color.accent'
   muted: 'Qt.rgba(root.contentForeground.r, root.contentForeground.g, root.contentForeground.b, 0.76)'
-  hairline: 'Qt.alpha(root.accent, 0.45)'
-  timeline: 'Qt.alpha(root.accent, 0.4)'
-  next-surface: 'Qt.alpha(root.accent, 0.12)'
+  divider: 'Qt.alpha(root.contentForeground, 0.35)'
 typography:
-  heading:
+  display:
+    fontFamily: 'root.arabic ? "Noto Sans Arabic" : root.systemFontFamily'
+    fontSize: 'Style.space(32)'
+    fontWeight: 700
+  headline:
+    fontFamily: 'root.arabic ? "Noto Kufi Arabic" : root.systemFontFamily'
+    fontSize: 'Style.space(26)'
+    fontWeight: 700
+  title:
     fontFamily: 'root.arabic ? "Noto Kufi Arabic" : root.systemFontFamily'
     fontSize: 'Style.space(21)'
     fontWeight: 700
+  next-detail:
+    fontFamily: 'root.arabic ? "Noto Sans Arabic" : root.systemFontFamily'
+    fontSize: 'Style.space(16)'
+  location:
+    fontFamily: 'root.arabic ? "Noto Sans Arabic" : root.systemFontFamily'
+    fontSize: 'Style.space(15)'
+  date:
+    fontFamily: 'root.arabic ? "Noto Sans Arabic" : root.systemFontFamily'
+    fontSize: 'Style.space(14)'
+  prayer-name:
+    fontFamily: 'root.arabic ? "Noto Sans Arabic" : root.systemFontFamily'
+    fontSize: 'Style.space(19)'
+  prayer-time:
+    fontFamily: 'root.systemFontFamily'
+    fontSize: 'Style.space(19)'
   body:
     fontFamily: 'root.arabic ? "Noto Sans Arabic" : root.systemFontFamily'
-    fontSize: 'root.arabic ? Math.max(Style.font.body, Style.space(15)) : Style.font.body'
+    fontSize: 'Style.font.body'
   body-small:
     fontFamily: 'root.arabic ? "Noto Sans Arabic" : root.systemFontFamily'
     fontSize: 'Style.font.bodySmall'
   caption:
     fontFamily: 'root.arabic ? "Noto Sans Arabic" : root.systemFontFamily'
     fontSize: 'Style.font.caption'
-  prayer-time:
-    fontFamily: 'root.systemFontFamily'
-    fontSize: 'Style.space(16)'
-  next-time:
-    fontFamily: 'root.systemFontFamily'
-    fontSize: 'Style.space(18)'
-    fontWeight: 700
-rounded:
-  row: 'Style.cornerRadius'
-  marker: '1'
 spacing:
   tight: 'Style.space(2)'
-  caption: 'Style.space(3)'
-  inline: 'Style.space(4)'
+  stepper: 'Style.space(4)'
   control: 'Style.space(6)'
   group: 'Style.space(8)'
+  summary: 'Style.space(9)'
   row: 'Style.space(10)'
   section: 'Style.space(12)'
   stack: 'Style.space(14)'
+  split: 'Style.space(24)'
 components:
+  overview-summary:
+    width: 'Style.space(310)'
+    textColor: '{colors.foreground}'
+  next-countdown:
+    textColor: '{colors.accent}'
+    typography: '{typography.display}'
   prayer-row:
     textColor: '{colors.foreground}'
-    height: 'Style.space(42)'
+    height: 'Style.space(43)'
   prayer-row-next:
     textColor: '{colors.accent}'
-    height: 'Style.space(66)'
-  prayer-row-surface:
-    rounded: '{rounded.row}'
-    padding: 'Style.space(10)'
-  prayer-row-next-surface:
-    backgroundColor: '{colors.next-surface}'
-    rounded: '{rounded.row}'
-    padding: 'Style.space(10)'
-  timeline-marker:
-    backgroundColor: '{colors.foreground}'
-    rounded: '{rounded.marker}'
-    size: 'Style.space(5)'
-  timeline-marker-next:
-    backgroundColor: '{colors.accent}'
-    rounded: '{rounded.marker}'
-    size: 'Style.space(8)'
+    height: 'Style.space(43)'
+  divider:
+    backgroundColor: '{colors.divider}'
+    width: '1'
+  action-rail:
+    width: 'Style.space(132)'
+  action-button:
+    textColor: '{colors.foreground}'
+  language-button:
+    textColor: '{colors.muted}'
 ---
 
 # Design System: Salat Times
 
 ## Overview
 
-**Creative North Star: "Prayer timeline"**
+**Creative North Star: "Wide split view"**
 
-The user selected concept C on 6 November 2026. A chronological list is the main composition: the next prayer expands just enough to contain its countdown, while the exact start remains aligned with every other prayer time. The working panel is calm, compact and integrated with Omarchy.
+The user-selected concept B gives the next prayer a concise summary beside a clear daily timetable. The native surface is calm and direct: a natural-language countdown leads the summary, exact times align in equal rows, and a single divider gives the two reading tasks their own space. Arabic mirrors the composition and is the initial language; an explicit English preference remains available.
 
-This is a code-led native Qt Quick adaptation, documented from `Panel.qml`, `BarWidget.qml`, `StepperRow.qml` and the shared `Service.qml`, then checked against actual Arabic/English timeline and focused-settings captures. The token frontmatter intentionally preserves symbolic QML bindings instead of freezing a screenshot palette; it is not a CSS token export. `root.systemFontFamily` resolves to `bar.fontFamily`, falling back to `Style.font.family`.
+The visual system follows live Omarchy colors and English typography, with deliberate Noto Arabic families. This document is extracted from the current QML and JavaScript and checked against the Arabic and English wide-panel captures. The frontmatter preserves native QML bindings as the source of truth; it is not a CSS token export. `root.systemFontFamily` resolves to `bar.fontFamily`, falling back to `Style.font.family`.
 
 **Key Characteristics:**
 
-- One integrated countdown inside the next prayer row
+- Separate next-prayer summary with a natural-language countdown
+- Six equal timetable rows with accent emphasis on the next prayer
 - Live desktop colors and English/numeric typography
-- Noto Arabic families and a mirrored reading layout
-- Thin timeline, square markers and flat native controls
-- Direct, distinct Location, Reminders and Settings views
+- Noto Arabic families and a mirrored composition
+- Flat native actions and focused secondary views
 
 ## Colors
 
 ### Primary
 
-**Live Omarchy accent** marks the next prayer, its time and its larger timeline marker. Translucent accent supplies the next-row wash, timeline and horizontal separators. The row wash stays at its documented opacity; imminent emphasis belongs to the bar’s native active state.
+**Live Omarchy accent** emphasizes the spoken countdown and the next prayer’s name and exact start. The next row uses accent text and bold weight without a filled card. Native controls use the same accent for their host-defined interaction states.
 
 ### Neutral
 
-**Live popup background** and **live bar foreground** keep the panel in the current desktop theme. **Muted foreground** is used for passed prayers, Hijri date and helper text. Dropdown surfaces bind to the popup background and their popup borders to the accent.
+**Live popup background** and **live bar foreground** keep the panel part of the desktop. **Muted reading foreground** supports dates, helper text and the overview language action. **Quiet divider** separates the summary and timetable using translucent foreground. All other timetable rows retain normal foreground; passed rows are not dimmed in this composition.
 
-**The Desktop Theme Rule.** Keep the live bindings. The navy, cream and peach in the review captures are one Omarchy theme, not fixed product colors. There is no user-facing appearance switch.
+**The Desktop Theme Rule.** Keep live color bindings. The navy, cream and peach in the captures belong to the active Omarchy theme; they are not fixed interface colors. There is no user-facing appearance switch.
 
 ## Typography
 
-The panel’s English labels and exact prayer-time numerals use the current bar font, with the host style family as fallback. Arabic headings use Noto Kufi Arabic; Arabic body text and the integrated countdown caption use Noto Sans Arabic. The bar follows the same Arabic-body/English-system split. Native text fields retain their host typography.
+English text and timetable numerals use the current bar font, with the host style family as fallback. Arabic headings use Noto Kufi Arabic; Arabic body text and the natural-language countdown use Noto Sans Arabic. Native text fields retain their host typography.
 
-The location or focused-view title is the heading role. Prayer names use body text; the next and current names are bold. Exact prayer times use the prayer-time role, stepping up only to next-time for the next prayer. Dates, Qibla, source/refresh and the countdown use body-small; form labels and small explanations use caption. No separate display countdown is used.
+The display role is the countdown phrase, with horizontal fitting down to `Style.space(22)` when needed. Headline names the app; title names a focused view. Next-detail combines the next prayer, optional tomorrow label and exact start. Location and date roles keep geographic and calendar context subordinate. Prayer-name and prayer-time share the same size; only the next entry is bold. Body, body-small and caption serve focused-view content and form explanations.
 
-**The Numeric Rule.** Exact prayer times stay right-aligned in their fixed-width column and disable layout mirroring. Arabic mirrors the row composition and label alignment, while the digits remain in their ordinary reading order. Do not replace the English or numeric family with a product-specific font.
+**The Numeric Rule.** Timetable clocks keep the live system font and disable layout mirroring. Arabic mirrors the row composition and label alignment while preserving the ordinary reading order of time digits.
+
+Compact bar countdowns use Arabic `س` and `د` units, with `أقل من دقيقة` below one minute. `Model.formatCountdownShort` isolates Arabic durations with Unicode RLI/PDI, and `Model.barLabel` isolates the complete Arabic label in all four bar styles. This keeps numbers and Arabic units together without affecting adjacent widgets. English compact formatting remains unchanged; the overview retains its separate natural-language countdown.
 
 ## Layout
 
-`KeyboardPanel` prefers `Style.space(400)` content width and fits its height to the available screen. The main column uses the stack spacing token; sections use section spacing. Vertical scrolling appears on overflow; horizontal scrolling is disabled. `Style.space` values are logical base units, not fixed physical pixels or web breakpoints.
+`KeyboardPanel` centers on the bar and fits a preferred overview content width of `Style.space(900)` to the screen. English reads summary, divider, timetable, then action rail; Arabic reverses that composition. The summary and rail use their frontmatter widths, with the timetable taking the remaining width. Flow gaps use the split spacing token. Shared body height is the greatest of summary text plus `Style.space(54)`, timetable height, or `Style.space(280)`.
 
-The overview contains location/language, Gregorian and Hijri dates, a separator, the timeline, an optional fasting hint, another separator, Qibla with source/refresh, and three equal-width actions. The six daily entries remain chronological. After Isha, an additional next-Fajr row carries an explicit “tomorrow” label and its countdown. There is no repeated hero, status column or series of “Passed” labels.
+The summary contains the title, next-prayer/start line, countdown phrase, localized location, Gregorian date and Hijri date. Location and Reminders are equal-width buttons anchored below it. Settings sits at the top of the action rail; language and Today sit at its bottom. The six timetable entries use equal-height rows with tight vertical gaps. Names take the remaining row width and elide before clocks; clock width follows its text. The summary marks tomorrow’s next prayer explicitly after today’s last prayer, while the timetable retains today’s six entries.
 
-Each timeline row reserves `Style.space(22)` for the line/marker gutter. Its content surface is four logical units shorter than its row and vertically centered. The time column is `Style.space(63)` wide; the prayer name elides first. The one-unit line sits eight logical units from the reading edge; only its half toward adjacent entries is drawn at each end.
+Below `Style.space(700)` of fitted content width, the Flow stacks the summary, divider, timetable and action rail at full width. The divider becomes horizontal. These are native logical-scale rules, not mobile or browser breakpoints. Height fits the available screen; vertical scrolling appears on overflow and horizontal scrolling is disabled.
 
-A focused view replaces the overview and keeps the language control plus Back to timetable. Location, Reminders and Settings are direct destinations, not duplicate forms. Location’s extra options are collapsed initially. Opening a destination closes transient menus, cancels a pending location search, resets scroll position and focuses Back to timetable; returning restores panel keyboard focus.
+Location, Reminders, Prayer settings and Today replace the overview at a preferred width of `Style.space(400)`. They share a title, language action and full-width Back to timetable action. Opening a destination closes menus, cancels location search, resets scroll and focuses Back to timetable. Returning restores panel keyboard focus. Location’s extra options start collapsed.
 
 ## Elevation & Depth
 
-The timeline and its local content use tonal layering without local shadows or glow. Native `qs.Ui` owns panel framing, hover, focus, pressed states and control geometry. A background rectangle extends across panel padding so the native surface stays coherent. The three focused views switch immediately; the current panel defines no custom reveal or settings-opacity animation.
+The overview uses a flat background, a single divider and type hierarchy without local shadows, glow or filled timetable rows. Native `qs.Ui` owns panel framing, control geometry and hover, focus and pressed states. A background rectangle extends across the panel padding. Focused views switch immediately; the current panel defines no custom reveal or settings-opacity animation.
 
 ## Shapes
 
-Use a straight timeline and small square markers. Marker corners have the marker radius; row highlights follow the live host corner radius. Ordinary timeline content is transparent; only the next row has a filled surface. Retain the native control shapes rather than introducing a second card or button system.
+The composition uses straight alignment and a thin divider. Location, Reminders, Settings and Today use native bordered icon buttons; language uses a quiet native text button. Keep corner geometry and control outlines owned by the host rather than assigning an independent radius system. The working panel contains no promotional imagery.
 
 ## Components
 
-- **Prayer timeline:** next row uses accent name/time, a larger marker and tonal wash. Its body-small countdown sits under the name in normal foreground. Current prayer name is bold; passed entries use muted text. An empty schedule shows Preparing prayer times.
-- **Qibla and refresh:** Qibla occupies the flexible portion of a compact row. The adjacent button combines the actual source with Refresh, reports Updating while fetching, and disables while offline or busy. Refresh errors wrap below it.
-- **Destination actions:** three equal-width native buttons open Location, Reminders or prayer Settings. The full-width Back to timetable button is shared by these views.
-- **Location:** current-location text, country filter, offline city presets and Search any city form the primary path. Search shows busy, no-match and connection-error feedback; Up/Down changes selection, Enter or a result click commits it, and Cancel search exits. More location options reveals weather adoption, contextual Habous controls and validated coordinates. Habous controls are limited to an empty or MA country filter.
-- **Prayer settings:** online-table and regional-method toggles, time-correction stepper, method dropdown, Asr button group and Hijri adjustment. Manual method selection disables the automatic suggestion. Shared `Toggle`, `Dropdown`, `ButtonGroup` and `PanelSectionHeader` remain native.
-- **Reminders:** Notify/Overlay/Silent button group, at-adhan and advance toggles, plus a lead-minute stepper visible when advance reminders are enabled. `StepperRow` uses two native action buttons around a centered bold value.
-- **Bar widget:** shared `WidgetButton`, with horizontal margin and vertical padding of 8.75. Native active state indicates an imminent prayer. Left click opens the panel, right click cycles bar styles and middle click switches language. Its tooltip includes the next prayer, remaining time, Hijri date and location.
+- **Next-prayer summary:** the localized next-prayer line carries its exact start and tomorrow context; the separate accent countdown uses `Model.formatNextCountdown`. That function rounds remaining time up to minutes and formats a short duration in the selected language. Recognized preset city/country labels translate only when their stored name and coordinates match; custom labels remain intact.
+- **Timetable:** six name/time rows from the shared service. Next-prayer text is accent and bold; other rows use normal foreground and weight. No timeline gutter, status column or countdown is embedded in a row. An empty schedule shows Preparing prayer times.
+- **Overview actions:** paired Location/Reminders actions belong below the summary. Settings, language and Today occupy the rail. Native buttons are focusable; the language label names the destination language and uses its appropriate font.
+- **Today:** dates, Qibla and the active Habous, AlAdhan or offline-calculation source appear in a focused view. A fasting hint appears when applicable, refresh errors wrap, and Refresh times shows its busy label and is disabled while fetching or online tables are disabled.
+- **Location:** current location, country filter, offline presets and Search any city form the primary path. Search provides busy, no-match and connection-error feedback; Up/Down changes selection, Enter or clicking a result commits it, and Cancel search exits. More location options reveals weather adoption, contextual Habous controls and validated coordinates. Habous controls apply to an empty or MA country filter.
+- **Prayer settings:** online-table and regional-method toggles, time-correction stepper, method dropdown, Asr button group and Hijri adjustment. Manual method selection disables the automatic suggestion. Shared `Toggle`, `Dropdown`, `ButtonGroup` and `PanelSectionHeader` stay native.
+- **Reminders:** Notify/Overlay/Silent selection, at-adhan and advance toggles, plus a lead-minute stepper visible when advance reminders are enabled. `StepperRow` uses native minus/plus actions around a centered bold value.
+- **Bar widget:** shared `WidgetButton` follows the live system font or Noto Sans Arabic and uses its native active state when a prayer is imminent. Arabic compact durations use localized units and isolated direction; the shared service also supplies the localized short duration to tooltips and advance reminders. Left click opens the panel, right click cycles bar styles and middle click switches language. The tooltip includes next-prayer context, remaining time, Hijri date and location.
 
-The optional full-screen adhan overlay remains a separate `Service.qml` surface. Its English text uses `Style.font.family`, and Arabic uses Noto Sans Arabic. These review captures cover the bar popover and its focused views, not the overlay layout.
+The optional full-screen adhan overlay remains a separate `Service.qml` surface, using `Style.font.family` for English and Noto Sans Arabic for Arabic. The current wide-panel captures do not validate that overlay’s layout.
 
 ## Do's and Don'ts
 
 ### Do:
 
-- Do keep the next start and countdown together in the timeline, including the explicit tomorrow row at the day boundary.
-- Do bind popup colors and English/numeric fonts to the live desktop, retaining the Noto Arabic heading/body split.
-- Do preserve direct destination actions and initially hidden advanced location controls.
-- Do use native Qt Quick controls, keyboard focus and Omarchy scale bindings.
-- Do distinguish concept artwork from real screenshots. The selected concept is `artwork/concepts/ui-c-timeline.png`, with its exact prompt and approval in the adjacent `.prompt.json`.
-- Do use the selected blue-hour skyline for the marketplace cover. `artwork/concepts/thumbnail-3-blue-hour.prompt.json` and embedded PNG metadata record its OpenAI ImageGen provenance; `marketplace.png` and `preview.png` are the selected cover. Actual captures in `artwork/screenshots/` record their direct desktop-capture provenance.
+- Do preserve concept B’s summary, divider, six-row timetable and action rail, mirrored for Arabic and stacked when fitted width is limited.
+- Do bind interface colors and English/numeric fonts to the live desktop while retaining the Noto Arabic heading/body split.
+- Do keep Arabic as the default and retain an explicitly saved English choice.
+- Do keep distinct focused destinations, visible keyboard focus and initially hidden advanced location controls.
+- Do distinguish the selected generated concept in `artwork/concepts/ui-b-wide.png` from current native captures in `.impeccable/review/wide-ar.png` and `.impeccable/review/wide-en.png`.
+- Do retain the selected blue-hour cover and its generation provenance. The authored `icon.svg` and raster `icon.png` belong to README branding and proposed marketplace support; their palette does not replace live interface colors.
 
 ### Don't:
 
-- Don’t restore a fixed emerald palette, an appearance selector, oversized hero numerals, a separate countdown card or a ring.
-- Don’t duplicate settings across views or expose the entire advanced location form on entry.
-- Don’t treat illustrative concept times or the blue-hour cover as a product screenshot; keep campaign imagery outside the working interface.
-- Don’t describe this native Linux implementation as a web or mobile screen. No HTML detector, mobile review or measured concept-diff result is claimed by this document.
+- Don’t add a fixed emerald palette, an appearance selector, oversized countdown numerals or a ring.
+- Don’t duplicate settings across views or expose all advanced location controls on entry.
+- Don’t present concept data or the blue-hour cover as a real app screenshot.
+- Don’t claim the marketplace displays the new icon: it currently renders initials.
+- Don’t describe this native Linux implementation as a browser or mobile interface, or claim a measured concept-diff result.

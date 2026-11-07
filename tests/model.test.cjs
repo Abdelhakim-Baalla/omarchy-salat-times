@@ -76,3 +76,30 @@ for(const city of presets) {
   assert.ok(prayers.every((p,i)=>i===0||p.date>=prayers[i-1].date),city.name);
 }
 console.log(`Passed: ${countries.length} countries/territories, ${presets.length} offline city presets, country filters and regional calculation suggestions.`);
+
+assert.equal(run('validLang(undefined)'), 'ar');
+assert.equal(run('validLang("invalid")'), 'ar');
+assert.equal(run('validLang("en")'), 'en');
+assert.equal(run('formatNextCountdown(28 * 60000, "ar")'), 'بعد 28 دقيقة');
+assert.equal(run('formatNextCountdown(2 * 60000, "ar")'), 'بعد دقيقتين');
+assert.equal(run('formatNextCountdown(3 * 60000, "ar")'), 'بعد 3 دقائق');
+assert.equal(run('formatNextCountdown(61 * 60000, "ar")'), 'بعد ساعة ودقيقة');
+assert.equal(run('formatNextCountdown(120 * 60000, "ar")'), 'بعد ساعتين');
+assert.equal(run('formatNextCountdown(28 * 60000, "en")'), 'in 28min');
+assert.equal(run('formatNextCountdown(61 * 60000, "en")'), 'in 1h 1min');
+assert.equal(run('formatNextCountdown(1, "en")'), 'in 1min');
+assert.equal(run('formatNextCountdown(0, "ar")'), 'حان وقت الصلاة');
+assert.equal(run(`localizedLocation('Agadir', 30.42, -9.598, [{name:'Agadir',nameAr:'أكادير',latitude:30.42,longitude:-9.598,countryCode:'MA'}], [{code:'MA',name:'Morocco',nameAr:'المغرب'}], 'ar')`), 'أكادير، المغرب');
+assert.equal(run(`localizedLocation('My mosque', 30.42, -9.598, [{name:'Agadir',nameAr:'أكادير',latitude:30.42,longitude:-9.598,countryCode:'MA'}], [], 'ar')`), 'My mosque');
+console.log('Passed: Arabic defaults, saved English preference, localized countdown grammar and location labels.');
+assert.equal(run('formatCountdownShort(59 * 60000, "ar")'), '\u206759 د\u2069');
+assert.equal(run('formatCountdownShort(80 * 60000, "ar")'), '\u20671 س 20 د\u2069');
+assert.equal(run('formatCountdownShort(600, "ar")'), '\u2067أقل من دقيقة\u2069');
+assert.equal(run('formatCountdownShort(80 * 60000, "en")'), '1h 20m');
+for (const style of ['full', 'name', 'countdown', 'compact']) {
+  const label = run(`barLabel('${style}', {prayer:{id:'asr',date:new Date(2026,10,7,15,26)}}, new Date(2026,10,7,14,6), 'ar')`);
+  assert.ok(label.startsWith('\u2067') && label.endsWith('\u2069'));
+  assert.equal((label.match(/\u2067/g)||[]).length, (label.match(/\u2069/g)||[]).length);
+  assert.doesNotMatch(label, /[hm]/);
+}
+console.log('Passed: Arabic bar units, balanced bidi isolation and all bar-label styles.');

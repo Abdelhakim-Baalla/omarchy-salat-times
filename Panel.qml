@@ -7,7 +7,7 @@ import qs.Ui
 import qs.Ui as Ui
 import "Model.js" as Model
 
-// Native prayer timeline with focused location, calculation and reminder views.
+// Wide split prayer view, mirrored in Arabic, with focused secondary views.
 Ui.Panel {
   id: root
   moduleName: "abdelhakim.salat"
@@ -31,18 +31,13 @@ Ui.Panel {
   readonly property int readingAlignment: arabic ? Text.AlignRight : Text.AlignLeft
   readonly property bool arabic: salat ? salat.lang === "ar" : true
 
-  readonly property var timelineRows: {
-    if (!salat) return []
-    var rows = salat.rows.slice()
-    if (salat.nextIsTomorrow && salat.nextPrayer)
-      rows.push({ name: salat.nextName, time: salat.nextTime, isNext: true, tomorrow: true })
-    return rows
-  }
+  readonly property bool compact: panel.contentWidth < Style.space(700)
+  readonly property string nextCountdown: salat ? Model.formatNextCountdown(salat.remainingMs, salat.lang) : "—"
   property string settingsPage: "location"
   property bool advancedLocation: false
   readonly property string pageTitle: settingsPage === "location" ? (arabic ? "الموقع" : "Location")
     : settingsPage === "reminders" ? (arabic ? "التنبيهات" : "Reminders")
-    : (arabic ? "إعدادات المواقيت" : "Prayer settings")
+    : settingsPage === "day" ? (arabic ? "اليوم" : "Today") : (arabic ? "إعدادات المواقيت" : "Prayer settings")
 
   function openSettings(page) {
     cancelEditLocation()
@@ -210,7 +205,7 @@ Ui.Panel {
     open: root.opened
     centerOnBar: true
     focusTarget: keyCatcher
-    contentWidth: panel.fittedContentWidth(Style.space(400))
+    contentWidth: panel.fittedContentWidth(Style.space(root.settingsOpen ? 400 : 900))
     contentHeight: panel.fittedContentHeight(column.implicitHeight)
 
     PanelKeyCatcher {
@@ -263,6 +258,7 @@ Ui.Panel {
           spacing: Style.space(14)
 
           Row {
+            visible: root.settingsOpen
             width: parent.width
             spacing: Style.space(12)
             PlainLabel {
@@ -287,194 +283,201 @@ Ui.Panel {
             }
           }
 
-          Column {
+          Flow {
             id: overview
             width: parent.width
-            spacing: Style.space(12)
+            spacing: Style.space(24)
             visible: !root.settingsOpen
+            readonly property real bodyHeight: Math.max(summaryText.implicitHeight + Style.space(54), schedule.implicitHeight, Style.space(280))
 
-            Column {
-              width: parent.width
-              spacing: Style.space(4)
-              PlainLabel {
+            Item {
+              width: root.compact ? overview.width : Style.space(310)
+              height: overview.bodyHeight
+              Column {
+                id: summaryText
                 width: parent.width
-                text: root.salat ? root.salat.gregorianLabel : ""
-                horizontalAlignment: root.readingAlignment
-                color: root.contentForeground
-                font.family: root.contentFontFamily
-                font.pixelSize: Style.font.bodySmall
-                wrapMode: Text.WordWrap
+                spacing: Style.space(9)
+                PlainLabel {
+                  width: parent.width
+                  text: root.arabic ? "مواقيت الصلاة" : "Salat Times"
+                  horizontalAlignment: root.readingAlignment
+                  color: root.contentForeground
+                  font.family: root.headingFontFamily
+                  font.pixelSize: Style.space(26)
+                  font.bold: true
+                  wrapMode: Text.WordWrap
+                }
+                PlainLabel {
+                  width: parent.width
+                  text: root.salat ? (root.arabic ? "التالي: " : "Next: ") + root.salat.nextName
+                    + (root.salat.nextIsTomorrow ? (root.arabic ? " · غداً" : " · tomorrow") : "") + " · " + root.salat.nextTime : ""
+                  horizontalAlignment: root.readingAlignment
+                  color: root.contentForeground
+                  font.family: root.contentFontFamily
+                  font.pixelSize: Style.space(16)
+                  wrapMode: Text.WordWrap
+                }
+                PlainLabel {
+                  width: parent.width
+                  text: root.nextCountdown
+                  horizontalAlignment: root.readingAlignment
+                  color: root.accent
+                  font.family: root.contentFontFamily
+                  font.pixelSize: Style.space(32)
+                  font.bold: true
+                  fontSizeMode: Text.HorizontalFit
+                  minimumPixelSize: Style.space(22)
+                }
+                PlainLabel {
+                  width: parent.width
+                  text: root.salat ? root.salat.locationLabel : ""
+                  horizontalAlignment: root.readingAlignment
+                  color: root.contentForeground
+                  font.family: root.contentFontFamily
+                  font.pixelSize: Style.space(15)
+                  wrapMode: Text.WordWrap
+                }
+                PlainLabel {
+                  width: parent.width
+                  text: root.salat ? root.salat.gregorianLabel : ""
+                  horizontalAlignment: root.readingAlignment
+                  color: root.muted
+                  font.family: root.contentFontFamily
+                  font.pixelSize: Style.space(14)
+                  wrapMode: Text.WordWrap
+                }
+                PlainLabel {
+                  width: parent.width
+                  text: root.salat ? root.salat.hijriLabel : ""
+                  horizontalAlignment: root.readingAlignment
+                  color: root.muted
+                  font.family: root.contentFontFamily
+                  font.pixelSize: Style.space(14)
+                  wrapMode: Text.WordWrap
+                }
               }
-              PlainLabel {
+              Row {
                 width: parent.width
-                text: root.salat ? root.salat.hijriLabel : ""
-                horizontalAlignment: root.readingAlignment
-                color: root.muted
-                font.family: root.contentFontFamily
-                font.pixelSize: Style.font.bodySmall
-                wrapMode: Text.WordWrap
+                anchors.bottom: parent.bottom
+                spacing: Style.space(12)
+                Ui.Button {
+                  width: (parent.width - parent.spacing) / 2
+                  text: root.arabic ? "الموقع" : "Location"
+                  iconText: "\uf041"
+                  bordered: true
+                  focusable: true
+                  foreground: root.contentForeground
+                  accent: root.accent
+                  fontFamily: root.contentFontFamily
+                  onClicked: root.openSettings("location")
+                }
+                Ui.Button {
+                  width: (parent.width - parent.spacing) / 2
+                  text: root.arabic ? "التنبيهات" : "Reminders"
+                  iconText: "\uf0f3"
+                  bordered: true
+                  focusable: true
+                  foreground: root.contentForeground
+                  accent: root.accent
+                  fontFamily: root.contentFontFamily
+                  onClicked: root.openSettings("reminders")
+                }
               }
             }
-            Rectangle { width: parent.width; height: 1; color: Qt.alpha(root.accent, 0.45) }
-
+            Rectangle {
+              width: root.compact ? overview.width : 1
+              height: root.compact ? 1 : overview.bodyHeight
+              color: Qt.alpha(root.contentForeground, 0.35)
+            }
             Column {
-              id: timeline
-              width: parent.width
+              id: schedule
+              width: root.compact ? overview.width : overview.width - Style.space(310 + 132 + 72) - 1
+              spacing: Style.space(2)
               Repeater {
-                model: root.timelineRows
-                delegate: Item {
-                  id: prayerRow
+                model: root.salat ? root.salat.rows : []
+                delegate: Row {
                   required property var modelData
-                  required property int index
-                  readonly property bool isNext: modelData.isNext === true
-                  readonly property color rowColor: isNext ? root.accent : (modelData.passed ? root.muted : root.contentForeground)
-                  width: timeline.width
-                  height: Style.space(isNext ? 66 : 42)
-                  Rectangle {
-                    x: root.arabic ? parent.width - Style.space(8) : Style.space(8)
-                    y: index === 0 ? parent.height / 2 : 0
-                    width: 1
-                    height: index === 0 || index === root.timelineRows.length - 1 ? parent.height / 2 : parent.height
-                    color: Qt.alpha(root.accent, 0.4)
-                  }
-                  Rectangle {
-                    width: Style.space(prayerRow.isNext ? 8 : 5)
-                    height: width
-                    radius: 1
-                    x: (root.arabic ? parent.width - Style.space(8) : Style.space(8)) - width / 2
+                  width: schedule.width
+                  height: Style.space(43)
+                  spacing: Style.space(10)
+                  readonly property color rowColor: modelData.isNext ? root.accent : root.contentForeground
+                  PlainLabel {
+                    width: parent.width - clock.implicitWidth - parent.spacing
                     anchors.verticalCenter: parent.verticalCenter
-                    color: prayerRow.rowColor
+                    text: modelData.name
+                    horizontalAlignment: root.readingAlignment
+                    color: parent.rowColor
+                    font.family: root.contentFontFamily
+                    font.pixelSize: Style.space(19)
+                    font.bold: modelData.isNext === true
+                    elide: Text.ElideRight
                   }
-                  Rectangle {
-                    x: root.arabic ? 0 : Style.space(22)
-                    width: parent.width - Style.space(22)
-                    height: parent.height - Style.space(4)
+                  PlainLabel {
+                    id: clock
                     anchors.verticalCenter: parent.verticalCenter
-                    radius: Style.cornerRadius
-                    color: prayerRow.isNext ? Qt.alpha(root.accent, 0.12) : "transparent"
-                    Row {
-                      anchors.fill: parent
-                      anchors.margins: Style.space(10)
-                      spacing: Style.space(8)
-                      Column {
-                        width: parent.width - prayerTime.width - parent.spacing
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: Style.space(3)
-                        PlainLabel {
-                          width: parent.width
-                          text: modelData.name + (modelData.tomorrow ? (root.arabic ? " · غداً" : " · tomorrow") : "")
-                          horizontalAlignment: root.readingAlignment
-                          color: prayerRow.rowColor
-                          font.family: root.contentFontFamily
-                          font.pixelSize: root.arabic ? Math.max(Style.font.body, Style.space(15)) : Style.font.body
-                          font.bold: prayerRow.isNext || modelData.isNow === true
-                          elide: Text.ElideRight
-                        }
-                        PlainLabel {
-                          width: parent.width
-                          visible: prayerRow.isNext
-                          text: root.salat ? (root.arabic ? "بعد " : "In ") + root.salat.remainingLabel : ""
-                          horizontalAlignment: root.readingAlignment
-                          color: root.contentForeground
-                          font.family: root.contentFontFamily
-                          font.pixelSize: Style.font.bodySmall
-                        }
-                      }
-                      PlainLabel {
-                        id: prayerTime
-                        width: Style.space(63)
-                        anchors.verticalCenter: parent.verticalCenter
-                        horizontalAlignment: Text.AlignRight
-                        text: modelData.time
-                        color: prayerRow.rowColor
-                        font.family: root.numericFontFamily
-                        font.pixelSize: Style.space(prayerRow.isNext ? 18 : 16)
-                        font.bold: prayerRow.isNext
-                        LayoutMirroring.enabled: false
-                      }
-                    }
+                    text: modelData.time
+                    color: parent.rowColor
+                    font.family: root.numericFontFamily
+                    font.pixelSize: Style.space(19)
+                    font.bold: modelData.isNext === true
+                    LayoutMirroring.enabled: false
                   }
                 }
               }
               PlainLabel {
                 width: parent.width
-                visible: root.timelineRows.length === 0
+                visible: !root.salat || root.salat.rows.length === 0
                 text: root.arabic ? "جارٍ إعداد المواقيت…" : "Preparing prayer times…"
                 color: root.muted
                 font.family: root.contentFontFamily
                 font.pixelSize: Style.font.body
               }
             }
-            PlainLabel {
-              width: parent.width
-              visible: root.salat && root.salat.fastingHint !== ""
-              text: root.salat ? root.salat.fastingHint : ""
-              horizontalAlignment: root.readingAlignment
-              color: root.accent
-              font.family: root.contentFontFamily
-              font.pixelSize: Style.font.bodySmall
-              wrapMode: Text.WordWrap
-            }
-            Rectangle { width: parent.width; height: 1; color: Qt.alpha(root.accent, 0.45) }
-            Row {
-              width: parent.width
-              spacing: Style.space(8)
-              PlainLabel {
-                width: parent.width - refreshButton.width - parent.spacing
-                anchors.verticalCenter: parent.verticalCenter
-                text: root.salat ? root.salat.qiblaLabel : ""
-                horizontalAlignment: root.readingAlignment
-                color: root.contentForeground
-                font.family: root.contentFontFamily
-                font.pixelSize: Style.font.bodySmall
-                wrapMode: Text.WordWrap
-              }
+            Item {
+              width: root.compact ? overview.width : Style.space(132)
+              height: root.compact ? railSettings.implicitHeight + railLanguage.implicitHeight + railToday.implicitHeight + Style.space(30) : overview.bodyHeight
               Ui.Button {
-                id: refreshButton
-                text: root.salat && root.salat.fetching ? (root.arabic ? "تحديث…" : "Updating…")
-                  : root.salat && root.salat.source === "habous" ? "Habous · " + (root.arabic ? "تحديث" : "Refresh")
-                  : root.salat && root.salat.source === "aladhan" ? "AlAdhan · " + (root.arabic ? "تحديث" : "Refresh")
-                  : (root.arabic ? "حساب محلي · تحديث" : "Offline · Refresh")
-                tooltipText: root.arabic ? "تحديث المواقيت" : "Refresh prayer times"
-                enabled: root.salat && root.salat.onlineEnabled && !root.salat.fetching
+                id: railSettings
+                width: parent.width
+                text: root.arabic ? "الإعدادات" : "Settings"
+                iconText: "\uf013"
+                bordered: true
                 focusable: true
-                foreground: root.muted
+                foreground: root.contentForeground
                 accent: root.accent
                 fontFamily: root.contentFontFamily
-                onClicked: if (root.salat) root.salat.fetchOnline()
+                onClicked: root.openSettings("timing")
               }
-            }
-            PlainLabel {
-              width: parent.width
-              visible: root.salat && root.salat.refreshError !== ""
-              text: root.salat ? root.salat.refreshError : ""
-              color: root.muted
-              font.family: root.contentFontFamily
-              font.pixelSize: Style.font.bodySmall
-              wrapMode: Text.WordWrap
-            }
-            Row {
-              width: parent.width
-              spacing: Style.space(6)
-              Repeater {
-                model: [
-                  { page: "location", title: root.arabic ? "الموقع" : "Location" },
-                  { page: "reminders", title: root.arabic ? "التنبيهات" : "Reminders" },
-                  { page: "timing", title: root.arabic ? "الإعدادات" : "Settings" }
-                ]
-                delegate: Ui.Button {
-                  required property var modelData
-                  width: (overview.width - Style.space(12)) / 3
-                  text: modelData.title
+              Column {
+                anchors.bottom: parent.bottom
+                width: parent.width
+                spacing: Style.space(10)
+                Ui.Button {
+                  id: railLanguage
+                  width: parent.width
+                  text: root.arabic ? "English" : "العربية"
+                  focusable: true
+                  foreground: root.muted
+                  accent: root.accent
+                  fontFamily: root.arabic ? root.systemFontFamily : "Noto Sans Arabic"
+                  onClicked: if (root.salat) root.salat.setLang(root.arabic ? "en" : "ar")
+                }
+                Ui.Button {
+                  id: railToday
+                  width: parent.width
+                  text: root.arabic ? "اليوم" : "Today"
+                  iconText: "\uf073"
+                  tooltipText: root.arabic ? "القبلة ومصدر المواقيت والتحديث" : "Qibla, timetable source and refresh"
+                  bordered: true
                   focusable: true
                   foreground: root.contentForeground
                   accent: root.accent
                   fontFamily: root.contentFontFamily
-                  onClicked: root.openSettings(modelData.page)
+                  onClicked: root.openSettings("day")
                 }
               }
             }
-          } // overview
+          }
 
           Ui.Button {
             id: backButton
@@ -486,6 +489,60 @@ Ui.Panel {
             accent: root.accent
             fontFamily: root.contentFontFamily
             onClicked: root.settingsOpen = false
+          }
+
+          Column {
+            width: parent.width
+            spacing: Style.space(12)
+            visible: root.settingsOpen && root.settingsPage === "day"
+            PlainLabel {
+              width: parent.width
+              text: root.salat ? root.salat.gregorianLabel + "\n" + root.salat.hijriLabel + "\n" + root.salat.qiblaLabel : ""
+              color: root.contentForeground
+              horizontalAlignment: root.readingAlignment
+              font.family: root.contentFontFamily
+              font.pixelSize: Style.font.body
+              wrapMode: Text.WordWrap
+            }
+            PlainLabel {
+              width: parent.width
+              text: !root.salat ? "" : root.salat.source === "habous" ? (root.arabic ? "المصدر: حبوس" : "Source: Habous")
+                : root.salat.source === "aladhan" ? (root.arabic ? "المصدر: AlAdhan" : "Source: AlAdhan")
+                : (root.arabic ? "المصدر: حساب محلي" : "Source: offline calculation")
+              color: root.muted
+              horizontalAlignment: root.readingAlignment
+              font.family: root.contentFontFamily
+              font.pixelSize: Style.font.body
+            }
+            PlainLabel {
+              width: parent.width
+              visible: root.salat && root.salat.fastingHint !== ""
+              text: root.salat ? root.salat.fastingHint : ""
+              color: root.accent
+              horizontalAlignment: root.readingAlignment
+              font.family: root.contentFontFamily
+              font.pixelSize: Style.font.body
+              wrapMode: Text.WordWrap
+            }
+            PlainLabel {
+              width: parent.width
+              visible: root.salat && root.salat.refreshError !== ""
+              text: root.salat ? root.salat.refreshError : ""
+              color: root.muted
+              font.family: root.contentFontFamily
+              font.pixelSize: Style.font.bodySmall
+              wrapMode: Text.WordWrap
+            }
+            Ui.Button {
+              width: parent.width
+              text: root.salat && root.salat.fetching ? (root.arabic ? "جارٍ التحديث…" : "Refreshing…") : (root.arabic ? "تحديث المواقيت" : "Refresh times")
+              enabled: root.salat && root.salat.onlineEnabled && !root.salat.fetching
+              focusable: true
+              foreground: root.contentForeground
+              accent: root.accent
+              fontFamily: root.contentFontFamily
+              onClicked: if (root.salat) root.salat.fetchOnline()
+            }
           }
 
           Column {

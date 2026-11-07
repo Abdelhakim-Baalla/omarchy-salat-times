@@ -78,7 +78,7 @@ BarWidget {
       if (panelLoader.item) panelLoader.item.openSettings("timing")
     }
     function page(id: string): void {
-      if (!panelLoader.item || ["location", "timing", "reminders"].indexOf(id) < 0) return
+      if (!panelLoader.item || ["location", "timing", "reminders", "day"].indexOf(id) < 0) return
       root.open()
       panelLoader.item.openSettings(id)
     }

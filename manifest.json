@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "id": "abdelhakim.salat",
   "name": "Salat Times",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "author": "abdelhakim",
-  "description": "Worldwide prayer times for Omarchy: system-themed timeline, 249-country location search, offline calculation, adhan reminders, Hijri calendar and Qibla.",
+  "description": "Arabic-first prayer times for Omarchy: a system-themed split view, worldwide locations, offline calculation, adhan reminders, Hijri calendar and Qibla.",
   "kinds": [
     "service",
     "bar-widget"
@@ -16,7 +16,7 @@
   },
   "barWidget": {
     "displayName": "Salat Times",
-    "description": "Prayer timeline with Arabic and English, live system colors, worldwide locations and focused settings",
+    "description": "Wide prayer summary and timetable with Arabic by default, live system colors and worldwide locations",
     "category": "Time",
     "allowMultiple": false,
     "defaultSection": "center"
