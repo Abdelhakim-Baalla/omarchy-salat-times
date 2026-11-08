@@ -134,7 +134,7 @@ Ui.Panel {
 
   function commitLocation() {
     if (!salat) return
-    var name = String(locationDraft || "").replace(/^\s+|\s+$/g, "")
+    var name = String(locationDraft || "").trim()
     var choice = locationSuggestions.length
       ? locationSuggestions[Math.max(0, Math.min(suggestionIndex, locationSuggestions.length - 1))]
       : null
@@ -148,7 +148,7 @@ Ui.Panel {
   }
 
   function requestGeocode(q) {
-    var query = String(q || "").replace(/^\s+|\s+$/g, "")
+    var query = String(q || "").trim()
     cancelGeocode()
     locationSuggestions = []
     locationFeedback = ""
