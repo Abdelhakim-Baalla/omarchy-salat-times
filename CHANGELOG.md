@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.3
+
+- Bound Habous cell searches to the current row, removing a quadratic scan when many closed rows contain unclosed cells.
+- Add a regression case for unclosed cells spread across many rows.
+
 ## 1.6.2
 
 - Trim Habous cell text with linear native trimming instead of the quadratic leading/trailing whitespace regex, completing the malformed-response hardening from 1.6.1.

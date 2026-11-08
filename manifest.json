@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "abdelhakim.salat",
   "name": "Salat Times",
-  "version": "1.6.2",
+  "version": "1.6.3",
   "author": "abdelhakim",
   "description": "Arabic-first prayer times for Omarchy: a system-themed split view, worldwide locations, offline calculation, adhan reminders, Hijri calendar and Qibla.",
   "kinds": [

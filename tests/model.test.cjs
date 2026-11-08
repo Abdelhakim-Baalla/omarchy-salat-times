@@ -118,6 +118,7 @@ assert.equal(run('stripTags("a" + " ".repeat(1000) + "b")'), 'a' + ' '.repeat(10
 for (const [name, html] of [
   ['unclosed rows', '<tr>'.repeat(262144)],
   ['unclosed cells', '<tr>' + '<td>'.repeat(262144) + '</tr>'],
+  ['unclosed cells across rows', ('<tr><td>' + 'x'.repeat(400) + '</tr>').repeat(2000)],
   ['bracket run in a cell', '<tr><td>' + '<'.repeat(262144) + '</td></tr>'],
   ['whitespace run in a cell', '<tr><td>a' + ' '.repeat(262144) + 'b</td></tr>'],
   ['oversized response', '<tr>'.repeat(300000)],
