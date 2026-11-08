@@ -113,10 +113,13 @@ assert.deepEqual(
 );
 assert.equal(run(`parseHabousDay(${JSON.stringify(habousRow)}, new Date(2026,10,9))`), null);
 assert.equal(run('stripTags("a<><b>x</b>")'), 'a<>x');
+assert.equal(run('stripTags("\\u00a0 a b \\u00a0")'), 'a b');
+assert.equal(run('stripTags("a" + " ".repeat(1000) + "b")'), 'a' + ' '.repeat(1000) + 'b');
 for (const [name, html] of [
   ['unclosed rows', '<tr>'.repeat(262144)],
   ['unclosed cells', '<tr>' + '<td>'.repeat(262144) + '</tr>'],
   ['bracket run in a cell', '<tr><td>' + '<'.repeat(262144) + '</td></tr>'],
+  ['whitespace run in a cell', '<tr><td>a' + ' '.repeat(262144) + 'b</td></tr>'],
   ['oversized response', '<tr>'.repeat(300000)],
 ]) {
   const started = process.hrtime.bigint();

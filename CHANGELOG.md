@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.2
+
+- Trim Habous cell text with linear native trimming instead of the quadratic leading/trailing whitespace regex, completing the malformed-response hardening from 1.6.1.
+- Bound individual Habous cell text before weekday and day matching.
+- Add a regression case for long interior whitespace runs in a Habous cell.
+
 ## 1.6.1
 
 - Parse the Habous timetable with a linear tag scan and bounded input, so a malformed or hostile response cannot block the desktop shell before the popup opens.

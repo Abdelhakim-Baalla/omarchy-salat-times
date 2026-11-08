@@ -172,6 +172,7 @@ function habousUrl(villeId) {
 var HABOUS_MAX_CHARS = 1048576
 var HABOUS_MAX_ROWS = 2000
 var HABOUS_MAX_CELLS = 64
+var HABOUS_MAX_CELL_CHARS = 256
 
 function stripTags(s) {
   var raw = String(s || "")
@@ -195,7 +196,9 @@ function stripTags(s) {
     textStart = pos
   }
   parts.push(raw.slice(textStart))
-  return parts.join("").replace(/\u00a0/g, " ").replace(/^\s+|\s+$/g, "")
+  // trim() scans linearly; /^\s+|\s+$/g retries \s+$ at every position of a
+  // long interior whitespace run and is quadratic on attacker-controlled cells.
+  return parts.join("").replace(/\u00a0/g, " ").trim()
 }
 
 function frenchWeekday(date) {
@@ -284,7 +287,10 @@ function habousCells(raw, lower, from, to) {
     var closeTag = "</t" + kind + ">"
     var end = lower.indexOf(closeTag, openEnd + 1)
     if (end < 0 || end + 5 > to) break
-    out.push(stripTags(raw.slice(openEnd + 1, end)))
+    var value = stripTags(raw.slice(openEnd + 1, end))
+    // Real cells are short; cap them before weekday/day matching so a huge
+    // cell cannot allocate a large match array or rerun regexes over it.
+    out.push(value.length > HABOUS_MAX_CELL_CHARS ? value.slice(0, HABOUS_MAX_CELL_CHARS) : value)
     pos = end + 5
   }
   return out
@@ -785,7 +791,7 @@ function parseLocationFile(raw) {
     var longitude = parseFloat(data.longitude)
     var hasCoordinates = isFinite(latitude) && isFinite(longitude) && Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180
     return {
-      name: typeof data.name === "string" ? data.name.replace(/^\s+|\s+$/g, "") : "",
+      name: typeof data.name === "string" ? data.name.trim() : "",
       latitude: hasCoordinates ? latitude : null,
       longitude: hasCoordinates ? longitude : null
     }
