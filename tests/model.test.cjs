@@ -103,3 +103,25 @@ for (const style of ['full', 'name', 'countdown', 'compact']) {
   assert.doesNotMatch(label, /[hm]/);
 }
 console.log('Passed: Arabic bar units, balanced bidi isolation and all bar-label styles.');
+
+// Habous HTML parsing must stay linear: a hostile or corrupted response with
+// unclosed tags previously blocked the shell thread for quadratic time.
+const habousRow = '<tr><td>Dimanche</td><td>28</td><td>8</td><td>06:12</td><td>07:30</td><td>12:40</td><td>15:30</td><td>18:20</td><td>19:40</td></tr>';
+assert.deepEqual(
+  Array.from(run(`parseHabousDay(${JSON.stringify('<table><tbody>'+habousRow+'</tbody></table>')}, new Date(2026,10,8))`)),
+  ['06:12','07:30','12:40','15:30','18:20','19:40']
+);
+assert.equal(run(`parseHabousDay(${JSON.stringify(habousRow)}, new Date(2026,10,9))`), null);
+assert.equal(run('stripTags("a<><b>x</b>")'), 'a<>x');
+for (const [name, html] of [
+  ['unclosed rows', '<tr>'.repeat(262144)],
+  ['unclosed cells', '<tr>' + '<td>'.repeat(262144) + '</tr>'],
+  ['bracket run in a cell', '<tr><td>' + '<'.repeat(262144) + '</td></tr>'],
+  ['oversized response', '<tr>'.repeat(300000)],
+]) {
+  const started = process.hrtime.bigint();
+  assert.equal(run(`parseHabousDay(${JSON.stringify(html)}, new Date(2026,10,8))`), null, name);
+  const elapsedMs = Number(process.hrtime.bigint() - started) / 1e6;
+  assert.ok(elapsedMs < 2000, `${name} took ${elapsedMs.toFixed(0)}ms`);
+}
+console.log('Passed: Habous table parsing, weekday/day matching and linear handling of malformed or oversized HTML.');
