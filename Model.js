@@ -167,8 +167,35 @@ function habousUrl(villeId) {
   return "https://www.habous.gov.ma/prieres/horaire_hijri_fr.php?ville=" + id
 }
 
+// Service.qml caps this download at 1 MiB; parsing runs synchronously on the
+// shell thread, so keep an independent bound here as well.
+var HABOUS_MAX_CHARS = 1048576
+var HABOUS_MAX_ROWS = 2000
+var HABOUS_MAX_CELLS = 64
+
 function stripTags(s) {
-  return String(s || "").replace(/<[^>]+>/g, "").replace(/\u00a0/g, " ").replace(/^\s+|\s+$/g, "")
+  var raw = String(s || "")
+  // indexOf scanning avoids the quadratic backtracking of /<[^>]+>/ on a
+  // pathological run of opening brackets with no closing '>'.
+  var parts = []
+  var textStart = 0
+  var pos = 0
+  while (pos < raw.length) {
+    var lt = raw.indexOf("<", pos)
+    if (lt < 0) break
+    var gt = raw.indexOf(">", lt + 1)
+    if (gt < 0) break
+    if (gt === lt + 1) {
+      // Empty "<>": the '<' is literal text.
+      pos = lt + 1
+      continue
+    }
+    parts.push(raw.slice(textStart, lt))
+    pos = gt + 1
+    textStart = pos
+  }
+  parts.push(raw.slice(textStart))
+  return parts.join("").replace(/\u00a0/g, " ").replace(/^\s+|\s+$/g, "")
 }
 
 function frenchWeekday(date) {
@@ -229,19 +256,61 @@ function scheduleFromTimes(baseDate, times, source, offsetMinutes) {
 
 // Parse the official Habous monthly HTML table for one civil day.
 // Columns: weekday | hijri day | gregorian day | fajr | sunrise | dhuhr | asr | maghrib | isha
+//
+// Tags are scanned with indexOf instead of lazy regexes. A response with many
+// opening `<tr>` tags and no closing tags would otherwise rescan the whole
+// remaining document from every start position (quadratic work), freezing the
+// desktop shell before the popup is ever opened.
+function asciiLower(s) {
+  // Length-preserving lowercase so indices stay aligned with the source text.
+  return String(s || "").replace(/[A-Z]/g, function(c) { return c.toLowerCase() })
+}
+
+function tagNameEnds(ch) {
+  return ch === ">" || ch === "/" || ch === " " || ch === "\t" || ch === "\n" || ch === "\r" || ch === "\f"
+}
+
+function habousCells(raw, lower, from, to) {
+  var out = []
+  var pos = from
+  while (pos < to && out.length < HABOUS_MAX_CELLS) {
+    var at = lower.indexOf("<t", pos)
+    if (at < 0 || at + 3 >= to) break
+    var kind = lower.charAt(at + 2)
+    if (kind !== "d" && kind !== "h") { pos = at + 2; continue }
+    if (!tagNameEnds(lower.charAt(at + 3))) { pos = at + 3; continue }
+    var openEnd = lower.indexOf(">", at + 3)
+    if (openEnd < 0 || openEnd >= to) break
+    var closeTag = "</t" + kind + ">"
+    var end = lower.indexOf(closeTag, openEnd + 1)
+    if (end < 0 || end + 5 > to) break
+    out.push(stripTags(raw.slice(openEnd + 1, end)))
+    pos = end + 5
+  }
+  return out
+}
+
 function parseHabousDay(html, date) {
   var raw = String(html || "")
-  var rowRe = /<tr[^>]*>([\s\S]*?)<\/tr>/gi
-  var cellRe = /<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi
-  var wantWeek = frenchWeekday(date)
+  if (raw.length > HABOUS_MAX_CHARS) return null
+  var lower = asciiLower(raw)
+  var wantWeek = frenchWeekday(date).toLowerCase()
   var wantDay = String(date.getDate())
-  var match
-  while ((match = rowRe.exec(raw))) {
-    var cells = []
-    var cm
-    var block = match[1]
-    cellRe.lastIndex = 0
-    while ((cm = cellRe.exec(block))) cells.push(stripTags(cm[1]))
+  var pos = 0
+  var rows = 0
+  while (pos < lower.length && rows < HABOUS_MAX_ROWS) {
+    var open = lower.indexOf("<tr", pos)
+    if (open < 0 || open + 3 >= lower.length) break
+    if (!tagNameEnds(lower.charAt(open + 3))) { pos = open + 3; continue }
+    var openEnd = lower.indexOf(">", open + 3)
+    if (openEnd < 0) break
+    var close = lower.indexOf("</tr>", openEnd + 1)
+    // An unclosed row cannot be followed by a valid one, so stop instead of
+    // searching for another row end from every later `<tr>`.
+    if (close < 0) break
+    rows += 1
+    var cells = habousCells(raw, lower, openEnd + 1, close)
+    pos = close + 5
     if (cells.length < 9) continue
     var times = []
     for (var i = 0; i < cells.length; i++) {
@@ -251,7 +320,7 @@ function parseHabousDay(html, date) {
     var weekday = cells[0]
     var greg = cells[2] || ""
     var dayNums = String(greg).match(/\d+/g) || []
-    if (weekday.toLowerCase().indexOf(wantWeek.toLowerCase()) < 0) continue
+    if (weekday.toLowerCase().indexOf(wantWeek) < 0) continue
     if (dayNums.indexOf(wantDay) < 0) continue
     return times.slice(0, 6)
   }

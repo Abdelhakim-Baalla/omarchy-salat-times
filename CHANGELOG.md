@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.1
+
+- Parse the Habous timetable with a linear tag scan and bounded input, so a malformed or hostile response cannot block the desktop shell before the popup opens.
+- Add regression checks for valid Habous tables and for oversized or unclosed HTML.
+
 ## 1.6.0
 
 - Apply the selected wide split layout: next-prayer summary, timetable and action rail, mirrored in Arabic.
