@@ -274,20 +274,25 @@ function tagNameEnds(ch) {
 }
 
 function habousCells(raw, lower, from, to) {
+  // Search within this row only. Calling indexOf on the whole document for
+  // every missing cell close scans the remainder of the response per row,
+  // which becomes quadratic across many closed rows with unclosed cells.
+  var source = raw.slice(from, to)
+  var block = lower.slice(from, to)
   var out = []
-  var pos = from
-  while (pos < to && out.length < HABOUS_MAX_CELLS) {
-    var at = lower.indexOf("<t", pos)
-    if (at < 0 || at + 3 >= to) break
-    var kind = lower.charAt(at + 2)
+  var pos = 0
+  while (pos < block.length && out.length < HABOUS_MAX_CELLS) {
+    var at = block.indexOf("<t", pos)
+    if (at < 0 || at + 3 >= block.length) break
+    var kind = block.charAt(at + 2)
     if (kind !== "d" && kind !== "h") { pos = at + 2; continue }
-    if (!tagNameEnds(lower.charAt(at + 3))) { pos = at + 3; continue }
-    var openEnd = lower.indexOf(">", at + 3)
-    if (openEnd < 0 || openEnd >= to) break
+    if (!tagNameEnds(block.charAt(at + 3))) { pos = at + 3; continue }
+    var openEnd = block.indexOf(">", at + 3)
+    if (openEnd < 0) break
     var closeTag = "</t" + kind + ">"
-    var end = lower.indexOf(closeTag, openEnd + 1)
-    if (end < 0 || end + 5 > to) break
-    var value = stripTags(raw.slice(openEnd + 1, end))
+    var end = block.indexOf(closeTag, openEnd + 1)
+    if (end < 0) break
+    var value = stripTags(source.slice(openEnd + 1, end))
     // Real cells are short; cap them before weekday/day matching so a huge
     // cell cannot allocate a large match array or rerun regexes over it.
     out.push(value.length > HABOUS_MAX_CELL_CHARS ? value.slice(0, HABOUS_MAX_CELL_CHARS) : value)
